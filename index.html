@@ -24,7 +24,12 @@
             <li><a href="#" id="nav-history" onclick="switchPage('history')">歷史卡組</a></li>
             <li><a href="#" id="nav-weekly" onclick="switchPage('weekly')">本週熱門卡組</a></li>
             <li><a href="#" id="nav-rules" onclick="switchPage('rules')">遊戲規則教學</a></li>
-            <li><a href="#" class="report-btn">問題回報</a></li>
+            <li>
+                <button id="auth-btn" onclick="toggleSignIn()" class="login-btn">
+                    登入 / 註冊
+                </button>
+                <span id="user-display" style="display:none; color: var(--accent-gold); margin-left: 10px;"></span>
+            </li>
         </ul>
     </header>
 
@@ -49,22 +54,11 @@
                 <div class="video-overlay"></div>
             </div>
 
-            <div id="volume-control-panel">
 
-                <div id="slider-wrapper">
-                    <input type="range" id="volume-slider" min="0" max="100" value="50"
-                        oninput="changeVolume(this.value)">
-                </div>
-
-                <div id="volume-btn" onclick="toggleVolumePanel()">
-                    <span id="volume-icon">🔊</span>
-                </div>
-
-            </div>
 
             <div id="main-hero-content" class="hero-content-hidden">
 
-                <div class="hero-section" style="text-align: center; padding: 50px 0;">
+                <div class="hero-section" style="text-align: center; padding: 50px 0 150px 0;">
                     <h1
                         style="font-family: var(--font-title); font-size: 3rem; color: var(--accent-gold); margin-bottom: 20px;">
                         Forged in Shadow
@@ -79,24 +73,6 @@
                     </button>
                 </div>
 
-                <div
-                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 50px;">
-                    <div
-                        style="background: rgba(26, 26, 26, 0.8); padding: 20px; border: 1px solid #333; border-radius: 8px; backdrop-filter: blur(5px);">
-                        <h3 style="color: var(--accent-gold);">最新戰報</h3>
-                        <p style="color: #ccc; font-size: 0.9rem;">本週 Meta 變動分析...</p>
-                    </div>
-                    <div
-                        style="background: rgba(26, 26, 26, 0.8); padding: 20px; border: 1px solid #333; border-radius: 8px; backdrop-filter: blur(5px);">
-                        <h3 style="color: var(--accent-gold);">新手教學</h3>
-                        <p style="color: #ccc; font-size: 0.9rem;">從零開始的闇影詩章...</p>
-                    </div>
-                    <div
-                        style="background: rgba(26, 26, 26, 0.8); padding: 20px; border: 1px solid #333; border-radius: 8px; backdrop-filter: blur(5px);">
-                        <h3 style="color: var(--accent-gold);">賽事資訊</h3>
-                        <p style="color: #ccc; font-size: 0.9rem;">世界大賽報名啟動...</p>
-                    </div>
-                </div>
             </div>
 
             <div class="pv-section">
@@ -213,6 +189,23 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="comments-section" style="margin-top: 50px; border-top: 1px solid #333; padding-top: 20px;">
+                    <h3 style="color: var(--accent-gold); font-family: var(--font-title);">
+                        <span id="comment-deck-name"></span> 戰術討論
+                    </h3>
+
+                    <div id="comments-list" class="comments-list">
+                        <p style="color: #666;">載入留言中...</p>
+                    </div>
+
+                    <div class="comment-input-area">
+                        <input type="text" id="comment-input" placeholder="登入後即可分享你的戰術心得..." disabled>
+                        <button id="send-comment-btn" onclick="postComment()" disabled>發布</button>
+                    </div>
+                </div>
+
+
             </div>
         </section>
 
@@ -290,6 +283,30 @@
                                 牌組能力值
                             </h3>
                             <canvas id="radarChartWeekly"></canvas>
+                        </div>
+                    </div>
+
+                    <div id="voting-section"
+                        style="margin-top: 40px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;">
+                        <h3 style="color: var(--accent-gold); text-align: center; margin-bottom: 20px;">人氣投票</h3>
+
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap;">
+                            <div style="text-align: center;">
+                                <h4 id="vote-deck-name" style="color: #fff; margin-bottom: 15px;">-</h4>
+                                <div style="font-size: 3rem; color: var(--accent-gold); font-weight: bold;"
+                                    id="vote-count-display">0</div>
+                                <p style="color: #888; margin-bottom: 15px;">VOTES</p>
+
+                                <button id="vote-btn" onclick="castVote()" class="vote-btn" disabled>
+                                    投給這一套
+                                </button>
+                                <p id="vote-msg" style="color: #ff6b6b; font-size: 0.9rem; margin-top: 10px;"></p>
+                            </div>
+
+                            <div style="width: 400px; max-width: 100%;">
+                                <canvas id="voteChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -398,7 +415,17 @@
         </div>
     </div>
 
+    <div id="volume-control-panel">
 
+        <div id="slider-wrapper">
+            <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="changeVolume(this.value)">
+        </div>
+
+        <div id="volume-btn" onclick="toggleVolumePanel()">
+            <span id="volume-icon">🔊</span>
+        </div>
+
+    </div>
 
 
 
@@ -424,8 +451,7 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
-
+    <script type="module" src="script.js"></script>
 </body>
 
 </html>
