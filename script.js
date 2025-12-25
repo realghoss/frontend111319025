@@ -191,8 +191,10 @@ window.postComment = async () => {
 };
 
 // ==========================================
-// 4. 本週熱門：投票系統
+// 4. 本週熱門：投票系統 (已更新：總票數統計)
 // ==========================================
+let unsubscribeVoteChart = null; // 新增：用來管理圖表監聽器的變數
+
 function initVoteChart() {
     const ctx = document.getElementById('voteChart');
     if(!ctx) return;
@@ -202,12 +204,14 @@ function initVoteChart() {
     voteChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['當前牌組', '平均人氣'],
+            // ★ 修改標籤：顯示總投票數
+            labels: ['當前牌組', '網站總投票數'],
             datasets: [{
                 label: '得票數',
-                data: [0, 50],
-                backgroundColor: ['#D4AF37', '#333'],
-                borderColor: ['#D4AF37', '#555'],
+                data: [0, 0], // 初始值
+                // 設定不同顏色方便區分：金色代表當前，深灰代表總數
+                backgroundColor: ['#D4AF37', '#444'],
+                borderColor: ['#D4AF37', '#666'],
                 borderWidth: 1
             }]
         },
@@ -224,26 +228,43 @@ function loadVotes(deckKey, deckTitle) {
     const nameDisplay = document.getElementById('vote-deck-name');
     if(nameDisplay) nameDisplay.textContent = deckTitle;
     
-    // 監聽即時票數
-    const deckRef = doc(db, "weekly_votes", deckKey);
+    // ★★★ 重點修改：監聽整個集合，而非單一文件 ★★★
+    // 這樣才能算出所有牌組的總票數
+    const votesCollection = collection(db, "weekly_votes");
     
-    onSnapshot(deckRef, (docSnap) => {
-        let count = 0;
-        if (docSnap.exists()) {
-            count = docSnap.data().count || 0;
-        }
+    // 如果之前有正在監聽的，先取消，避免重複執行浪費效能
+    if (unsubscribeVoteChart) unsubscribeVoteChart();
+
+    unsubscribeVoteChart = onSnapshot(votesCollection, (snapshot) => {
+        let totalVotes = 0;
+        let currentDeckVotes = 0;
+
+        // 遍歷所有投票文件來計算總和
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const count = data.count || 0;
+            
+            // 累加總票數
+            totalVotes += count;
+
+            // 如果是當前瀏覽的牌組，記錄它的票數
+            if (doc.id === deckKey) {
+                currentDeckVotes = count;
+            }
+        });
         
-        // 更新數字顯示
+        // 更新文字數字顯示
         const countDisplay = document.getElementById('vote-count-display');
-        if(countDisplay) countDisplay.textContent = count;
+        if(countDisplay) countDisplay.textContent = currentDeckVotes;
         
-        // 更新圖表
+        // 更新圖表數據 [當前, 總數]
         if(voteChart) {
-            voteChart.data.datasets[0].data[0] = count;
+            voteChart.data.datasets[0].data = [currentDeckVotes, totalVotes];
             voteChart.update();
         }
     });
 
+    // 檢查按鈕狀態 (這部分維持不變)
     checkVoteStatus(deckKey);
 }
 
@@ -286,7 +307,10 @@ window.castVote = async () => {
 
     try {
         await setDoc(userVoteRef, { votedAt: new Date() });
+        // merge: true 確保如果文件不存在會自動建立
         await setDoc(deckRef, { count: increment(1) }, { merge: true });
+        
+        // UI 會透過 onSnapshot 自動更新，這裡只需要檢查按鈕狀態
         checkVoteStatus(currentWeeklyDeck);
     } catch (e) {
         console.error("投票失敗", e);
@@ -691,18 +715,216 @@ const cardsData = [
     { id: 223, name: "再臨之創世龍", class: "dragon", cost: 10, atk: "9", hp: "10", image:"images/dr2-5-1.png", desc: "【疾馳】" },
     { id: 224, name: "呵護的智龍", class: "dragon", cost: 10, atk: "4", hp: "4", image:"images/dr2-5-2.png", desc: "於手牌中發動。當自己的從者卡超進化時，使這張卡片的消費-3。<br>【入場曲】召喚1張『巨翼飛龍』到自己的戰場上。" },
 
+    { id: 225, name: "妖惑魅魔‧莉莉姆", class: "abyss", cost: 1, atk: "1", hp: "1", image:"images/ab1-1-1.png", desc: "【謝幕曲】增加1張『蝙蝠』到自己的手牌中。" },
+    { id: 226, name: "怨恨的栽培者", class: "abyss", cost: 1, atk: "1", hp: "1", image:"images/ab1-1-2.png", desc: "【謝幕曲】增加1張『怨靈』到自己的手牌中。" },
+    { id: 227, name: "死神揮鐮", class: "abyss", cost: 1, atk: "N/A", hp: "N/A", image:"images/ab1-1-3.png", desc: "指定1張自己戰場上的從者卡與1張敵方戰場上的從者卡。將其破壞。" },
+    { id: 228, name: "凶惡的小木乃伊", class: "abyss", cost: 2, atk: "2", hp: "2", image:"images/ab1-1-4.png", desc: "【入場曲】【死靈術_4】使這張卡片獲得【疾馳】。" },
+    { id: 229, name: "無名惡魔", class: "abyss", cost: 2, atk: "2", hp: "2", image:"images/ab1-1-5.png", desc: "【進化時】召喚2張『蝙蝠』到自己的戰場上。" },
+    { id: 230, name: "幹練死神‧蜜諾", class: "abyss", cost: 2, atk: "2", hp: "1", image:"images/ab1-1-6.png", desc: "【爆能強化_4】使這張卡片獲得【突進】與【必殺】。<ab>【謝幕曲】增加1張『骷髏士兵』到自己的手牌中。" },
+    { id: 231, name: "夢魔‧維莉", class: "abyss", cost: 2, atk: "2", hp: "3", image:"images/ab1-2-1.png", desc: "【入場曲】給予自己的主戰者3點傷害。<br>【進化時】回復自己的主戰者5點生命值。" },
+    { id: 232, name: "盛燃的魔劍‧歐特魯斯", class: "abyss", cost: 2, atk: "2", hp: "2", image:"images/ab1-2-2.png", desc: "【入場曲】使自己的墓場+2。<br>【守護】<br>【進化時】【死靈術_4】發動2次「隨機給予1張敵方戰場上的從者卡2點傷害」。" },
+    { id: 233, name: "新任護墓者", class: "abyss", cost: 2, atk: "2", hp: "2", image:"images/ab1-2-3.png", desc: "【爆能強化_7】發動【亡者召還_5】與【亡者召還_3】。" },
+    { id: 234, name: "混融的繼承者‧夏姆‧娜可亞", class: "abyss", cost: 2, atk: "2", hp: "2", image:"images/ab1-2-4.png", desc: "【入場曲】使信仰值-10，並使自己的信仰獲得「自己可指定的【模式】數+1」。<br>【超進化時】指定1張敵方戰場上的從者卡。將其破壞，並增加1張與其同名的卡片到自己的手牌中。<br>信仰<br>信仰值由0開始。<br>當自己指定【模式】時，使信仰值+1。" },
+    { id: 235, name: "憧憬之鐵鎚‧阿爾梅達", class: "abyss", cost: 2, atk: "3", hp: "1", image:"images/ab1-2-5.png", desc: "【爆能強化_4】使這張卡片進化。使這張卡片+1/+1。<br>【突進】" },
+    { id: 236, name: "混沌怨咒", class: "abyss", cost: 2, atk: "N/A", hp: "N/A", image:"images/ab1-2-6.png", desc: "指定1個【模式】並發動該能力。<br>（1）由自己的牌堆中抽取1張從者卡。<br>（2）發動【亡者召還_2】。" },
+    { id: 237, name: "捕食靈魂", class: "abyss", cost: 2, atk: "N/A", hp: "N/A", image:"images/ab1-3-1.png", desc: "指定1張自己戰場上的從者卡。將其破壞。由自己的牌堆中抽取2張卡片。" },
+    { id: 238, name: "蛇神的嗔怒", class: "abyss", cost: 2, atk: "N/A", hp: "N/A", image:"images/ab1-3-2.png", desc: "指定1張敵方戰場上的從者卡或敵方的主戰者。給予其3點傷害。給予自己的主戰者2點傷害。" },
+    { id: 239, name: "詛咒派對", class: "abyss", cost: 2, atk: "N/A", hp: "N/A", image:"images/ab1-3-3.png", desc: "增加1張『怨靈』與1張『骷髏士兵』與1張『腐臭的殭屍』到自己的手牌中。" },
+    { id: 240, name: "役使蝙蝠", class: "abyss", cost: 2, atk: "N/A", hp: "N/A", image:"images/ab1-3-4.png", desc: "召喚2張『蝙蝠』到自己的戰場上。" },
+    { id: 241, name: "異變銳擊", class: "abyss", cost: 2, atk: "N/A", hp: "N/A", image:"images/ab1-3-5.png", desc: "給予自己的主戰者2點傷害。使自己獲得『紋章：異變銳擊』。<br>紋章<br>【倒數_2】<br>自己的回合結束時，隨機給予1張敵方戰場上的從者卡2點傷害。回復自己的主戰者1點生命值。" },
+    { id: 242, name: "混融之城", class: "abyss", cost: 2, atk: "N/A", hp: "N/A", image:"images/ab1-3-6.png", desc: "【入場曲】指定1個【模式】並發動該能力。<br>（1）由自己的牌堆中抽取1張卡片。<br>（2）隨機使1張自己戰場上的從者卡+1/+1。<br>消費1【策動】破壞這張卡片。發動與【入場曲】相同的能力。" },
+    { id: 243, name: "暗夜鬼人", class: "abyss", cost: 3, atk: "4", hp: "3", image:"images/ab1-4-1.png", desc: "【入場曲】給予自己的主戰者1點傷害。" },
+    { id: 244, name: "午夜的吸血鬼‧艾菈露", class: "abyss", cost: 3, atk: "1", hp: "1", image:"images/ab1-4-2.png", desc: "【入場曲】召喚1張『蝙蝠』到自己的戰場上。<br>當自己的『蝙蝠』進入戰場時，使其獲得【疾馳】。給予自己的主戰者1點傷害。" },
+    { id: 245, name: "役骨少女", class: "abyss", cost: 3, atk: "1", hp: "2", image:"images/ab1-4-3.png", desc: "【謝幕曲】召喚2張『骷髏士兵』到自己的戰場上。" },
+    { id: 246, name: "法外的賞金獵人‧巴爾特", class: "abyss", cost: 3, atk: "3", hp: "1", image:"images/ab1-4-4.png", desc: "【入場曲】使自己獲得『紋章：法外的賞金獵人‧巴爾特』。<br>紋章<br>【倒數_4】<br>自己的回合結束時，給予全部的主戰者1點傷害。" },
+    { id: 247, name: "狂風之翼‧圮尤菈", class: "abyss", cost: 3, atk: "2", hp: "4", image:"images/ab1-4-5.png", desc: "【突進】<br>當自己的其他從者卡超進化時，使其與這張卡片+2/+0。" },
+    { id: 248, name: "殘虐戰爭‧蘿拉", class: "abyss", cost: 3, atk: "3", hp: "2", image:"images/ab1-4-6.png", desc: "【入場曲】指定1張自己戰場上的其他從者卡。使其獲得【必殺】。<br>【超進化時】指定1張自己戰場上的其他從者卡。使其獲得【疾馳】。" },
+    { id: 249, name: "混融的肯定者", class: "abyss", cost: 3, atk: "1", hp: "1", image:"images/ab1-5-1.png", desc: "【入場曲】指定1個【模式】並發動該能力。<br>（1）給予敵方戰場上全部的從者卡1點傷害。<br>（2）使這張卡片+2/+2。<br>【進化時】發動與【入場曲】相同的能力。" },
+    { id: 250, name: "愛之旅人‧薩堤爾", class: "abyss", cost: 3, atk: "3", hp: "3", image:"images/ab1-5-2.png", desc: "【入場曲】如果自己戰場上有已進化的從者卡，則會使這張卡片進化。<br>【光紋】" },
+    { id: 251, name: "元素共鳴‧巴力", class: "abyss", cost: 3, atk: "2", hp: "2", image:"images/ab1-5-3.png", desc: "【入場曲】指定1個【模式】並發動該能力。<br>（1）使隨機1張自己戰場上的其他從者卡與這張卡片各+1/+1。<br>（2）隨機給予1張敵方戰場上的從者卡3點傷害。" },
+    { id: 252, name: "叫喚與憎惡", class: "abyss", cost: 3, atk: "N/A", hp: "N/A", image:"images/ab1-5-4.png", desc: "指定2個【模式】並發動該能力。<br>（1）回復自己的PP 1點。<br>（2）由自己的牌堆中抽取1張從者卡。<br>（3）由自己的牌堆中抽取1張消費為3的法術卡。<br>（4）隨機給予1張敵方戰場上的從者卡4點傷害。" },
+    { id: 253, name: "瞑地的靈園", class: "abyss", cost: 3, atk: "N/A", hp: "N/A", image:"images/ab1-5-5.png", desc: "【入場曲】使自己的墓場+2。<br>【策動】破壞這張卡片。召喚2張『怨靈』到自己的戰場上。" },
+    { id: 254, name: "多情的死靈法師", class: "abyss", cost: 4, atk: "5", hp: "4", image:"images/ab1-5-6.png", desc: "【進化時】召喚2張『怨靈』到自己的戰場上。<br>【超進化時】使其獲得【吸血】。" },
+    { id: 255, name: "奇異探索者‧尤娜", class: "abyss", cost: 4, atk: "3", hp: "5", image:"images/ab2-1-1.png", desc: "【守護】<br>【謝幕曲】增加1張『怨靈』與1張『蝙蝠』到自己的手牌中。" },
+    { id: 256, name: "藍薔薇千金‧賽蕾絲", class: "abyss", cost: 4, atk: "1", hp: "4", image:"images/ab2-1-2.png", desc: "【必殺】<br>自己的回合結束時，回復自己的主戰者2點生命值。如果這張卡片已超進化，則會由原本的回復2點轉變為回復4點。使這張卡片獲得【障壁】。" },
+    { id: 257, name: "瞑地天宮‧穆坎", class: "abyss", cost: 4, atk: "3", hp: "3", image:"images/ab2-1-3.png", desc: "【入場曲】【死靈術_8】使這張卡片進化。<br>當自己的死者‧從者卡進入戰場時，使其獲得【必殺】。<br>當這張卡片進化時，召喚1張『怨靈』到自己的戰場上。" },
+    { id: 258, name: "暮夜魔將‧艾瑟菈", class: "abyss", cost: 4, atk: "1", hp: "3", image:"images/ab2-1-4.png", desc: "【入場曲】使這張卡片+X/+0。X為「自己戰場上的其他從者卡張數」。給予自己的主戰者2點傷害。<br>【疾馳】<br>" },
+    { id: 259, name: "混融的祈禱者", class: "abyss", cost: 4, atk: "4", hp: "4", image:"images/ab2-1-5.png", desc: "【入場曲】指定1個【模式】並發動該能力。<br>（1）隨機給予1張敵方戰場上的從者卡3點傷害。<br>（2）回復自己的主戰者2點生命值。<br>【進化時】發動與【入場曲】相同的能力。" },
+    { id: 260, name: "暴虐的行進", class: "abyss", cost: 4, atk: "N/A", hp: "N/A", image:"images/ab2-1-6.png", desc: "給予隨機2張敵方戰場上的從者卡與敵方的主戰者各2點傷害。" },
+    { id: 261, name: "禁約惡魔", class: "abyss", cost: 5, atk: "4", hp: "4", image:"images/ab2-2-1.png", desc: "【入場曲】由自己的牌堆中抽取2張卡片。給予自己的主戰者2點傷害。<br>【進化時】指定1張敵方戰場上的從者卡。給予其6點傷害。" },
+    { id: 262, name: "無盡獵人‧阿拉加維", class: "abyss", cost: 5, atk: "4", hp: "3", image:"images/ab2-2-2.png", desc: "【入場曲】對敵方戰場上全部的從者卡分配7點傷害。<br>【進化時】給予全部的主戰者3點傷害。" },
+    { id: 263, name: "白銀槍彈‧雷文", class: "abyss", cost: 5, atk: "3", hp: "4", image:"images/ab2-2-3.png", desc: "【必殺】<br>【進化時】指定2張敵方戰場上的從者卡。將其破壞。給予自己的主戰者2點傷害。" },
+    { id: 264, name: "流墮的冥河‧凱倫", class: "abyss", cost: 5, atk: "4", hp: "4", image:"images/ab2-2-4.png", desc: "【入場曲】發動【亡者召還_2】與【亡者召還_1】。<br>當自己的死者‧從者卡進入戰場時，使其獲得【守護】。<br>【超進化時】使自己獲得『紋章：流墮的冥河‧凱倫』。<br>紋章<br>【倒數_2】<br>自己的回合開始時，發動【亡者召還_3】。" },
+    { id: 265, name: "混融的團結者", class: "abyss", cost: 5, atk: "4", hp: "4", image:"images/ab2-2-5.png", desc: "【入場曲】指定1個【模式】並發動該能力。<br>（1）召喚1張『混融的團結者』到自己的戰場上。使其與這張卡片獲得【突進】。<br>（2）召喚1張『混融的團結者』到自己的戰場上。使其與這張卡片獲得【守護】。<br>（3）使自己戰場上全部的『混融的團結者』+2/+2。<br>【超進化時】發動與【入場曲】相同的能力。" },
+    { id: 266, name: "腐敗侵襲", class: "abyss", cost: 5, atk: "N/A", hp: "N/A", image:"images/ab2-2-6.png", desc: "使戰場上全部的從者卡-2/-2。使自己與敵方獲得『紋章：腐敗侵襲』。【解放奧義】破壞自己的『紋章：腐敗侵襲』。<br>紋章<br>【倒數_4】<br>自己的回合結束時，給予自己的主戰者2點傷害。" },
+    { id: 267, name: "魔狼首領", class: "abyss", cost: 6, atk: "3", hp: "6", image:"images/ab2-3-1.png", desc: "【疾馳】<br>【必殺】" },
+    { id: 268, name: "雜技亡魂", class: "abyss", cost: 6, atk: "5", hp: "5", image:"images/ab2-3-2.png", desc: "【入場曲】發動【亡者召還_4】。" },
+    { id: 269, name: "屍骸士兵", class: "abyss", cost: 6, atk: "3", hp: "3", image:"images/ab2-3-3.png", desc: "【入場曲】召喚2張『腐臭的殭屍』到自己的戰場上。" },
+    { id: 270, name: "不屈的銳刃‧巴薩拉加", class: "abyss", cost: 6, atk: "2", hp: "7", image:"images/ab2-3-4.png", desc: "【威懾】<br>【謝幕曲】召喚1張『不屈的銳刃‧巴薩拉加』到自己的戰場上。給予自己的主戰者2點傷害。" },
+    { id: 271, name: "霸空武神‧哪吒", class: "abyss", cost: 6, atk: "8", hp: "6", image:"images/ab2-3-5.png", desc: "【突進】<br>自己的回合結束時，隨機給予1張敵方戰場上的從者卡4點傷害。隨機給予1張敵方戰場上的從者卡2點傷害。" },
+    { id: 272, name: "生滅的技巧‧涅槃", class: "abyss", cost: 6, atk: "2", hp: "4", image:"images/ab2-3-6.png", desc: "【入場曲】使自己戰場上全部進化前的從者卡進化。給予自己的主戰者2點傷害。<br>【吸血】<br>" },
+    { id: 273, name: "烈毒公主‧梅杜莎", class: "abyss", cost: 7, atk: "3", hp: "7", image:"images/ab2-4-1.png", desc: "【突進】<br>1回合中可進行3次攻擊。<br>【攻擊時】如果對從者卡進行攻擊，則會破壞交戰對象。" },
+    { id: 274, name: "絕叫與愛絕的顯現‧魯魯納伊＆瓦娜蕾格", class: "abyss", cost: 7, atk: "5", hp: "5", image:"images/ab2-4-2.png", desc: "【入場曲】指定1個【模式】並發動該能力。<br>（1）增加1張『絕叫的擴散』到自己的手牌中。<br>（2）增加1張『愛絕的飛翔』到自己的手牌中。" },
+    { id: 275, name: "闇之攝理‧菲迪耶爾", class: "abyss", cost: 7, atk: "5", hp: "5", image:"images/ab2-4-3.png", desc: "【入場曲】【死靈術_6】發動【亡者召還_2】與【亡者召還_1】。使其進化。<br>自己的回合結束時，使敵方戰場上全部的從者卡-2/-2。" },
+    { id: 276, name: "狡智的墮天司‧彼列", class: "abyss", cost: 7, atk: "", hp: "", image:"images/ab2-4-4.png", desc: "【入場曲】給予戰場上全部的其他從者卡10點傷害。【解放奧義】使自己獲得『紋章：狡智的墮天司‧彼列』。<br>【超進化時】使自己的『紋章：狡智的墮天司‧彼列』倒數回合數-1。<br>紋章<br>【倒數_4】<br>【謝幕曲】給予敵方的主戰者20點傷害。" },
+    { id: 277, name: "穿刺公‧弗拉德", class: "abyss", cost: 8, atk: "5", hp: "8", image:"images/ab2-4-5.png", desc: "【入場曲】指定1張敵方戰場上的從者卡。給予其5點傷害。回復自己的主戰者5點生命值。" },
+    { id: 278, name: "奔放的獄炎‧凱爾貝洛斯", class: "abyss", cost: 8, atk: "6", hp: "6", image:"images/ab2-4-6.png", desc: "【入場曲】召喚1張『守衛犬的右腕‧米米』與1張『守衛犬的左腕‧可可』到自己的戰場上。【死靈術_6】使自己戰場上全部的其他從者卡+2/+0。<br>【超進化時】發動2次【亡者召還_1】。" },
+    { id: 279, name: "泡沫的鬼姬", class: "abyss", cost: 8, atk: "4", hp: "6", image:"images/ab2-5-1.png", desc: "【入場曲】指定2張敵方戰場上的從者卡。將其破壞。給予自己的主戰者4點傷害。<br>【疾馳】" },
+    { id: 280, name: "雙禍夜行‧吟雪＆夕月", class: "abyss", cost: 9, atk: "5", hp: "5", image:"images/ab2-5-2.png", desc: "【入場曲】指定1個【模式】並發動該能力。<br>（1）召喚4張『一尾狐』到自己的戰場上。<br>（2）隨機破壞4張敵方戰場上的從者卡。回復自己的主戰者4點生命值。" },
 
-    { id: 6, name: "吸血鬼", class: "abyss", cost: 7, atk: "2", hp: "1", image: "images/ab2-4-4.png", desc: "必殺。" },
-    { id: 6, name: "吸血鬼", class: "abyss", cost: 8, atk: "2", hp: "1", image: "images/ab2-4-6.png", desc: "必殺。" },
-    { id: 6, name: "吸血鬼", class: "abyss", cost: 9, atk: "2", hp: "1", image: "images/ab2-5-2.png", desc: "必殺。" },
 
-    { id: 7, name: "天界獵犬", class: "bishop", cost: 1, atk: "2", hp: "2", image: "images/bi1-1-5.png", desc: "守護。" },
-    { id: 7, name: "天界獵犬", class: "bishop", cost: 3, atk: "2", hp: "2", image: "images/bi1-4-6.png", desc: "守護。" },
-    { id: 7, name: "天界獵犬", class: "bishop", cost: 3, atk: "2", hp: "2", image: "images/bi1-5-1.png", desc: "守護。" },
 
-    { id: 8, name: "古代創造物", class: "nemesis", cost: 2, atk: "3", hp: "1", image: "images/ne1-2-2.png", desc: "突進。" },
-    { id: 8, name: "古代創造物", class: "nemesis", cost: 2, atk: "3", hp: "1", image: "images/ne1-3-4.png", desc: "突進。" },
-    { id: 8, name: "古代創造物", class: "nemesis", cost: 3, atk: "3", hp: "1", image: "images/ne1-5-1.png", desc: "突進。" },
+    { id: 281, name: "利利耶的撩動", class: "bishop", cost: 0, atk: "N/A", hp: "N/A", image:"images/bi1-1-1.png", desc: "消費2【策動】破壞這張卡片。指定1張自己戰場上的從者卡。使其變身為『利利耶的撩動』。由自己的牌堆中抽取1張卡片。" },
+    { id: 282, name: "攜持魔杖的外科醫生‧媞可", class: "bishop", cost: 1, atk: "0", hp: "4", image:"images/bi1-1-2.png", desc: "當自己進行護符卡的【策動】時，回復自己的主戰者1點生命值。<br>【進化時】指定1張敵方戰場上的從者卡。給予其3點傷害。" },
+    { id: 283, name: "神聖防禦", class: "bishop", cost: 1, atk: "N/A", hp: "N/A", image:"images/bi1-1-3.png", desc: "指定1張自己戰場上擁有【守護】的從者卡。使其+0/+1。隨機給予1張敵方戰場上的從者卡X點傷害。X為「所指定從者卡的生命值」。" },
+    { id: 284, name: "擁翼的石像", class: "bishop", cost: 1, atk: "N/A", hp: "N/A", image:"images/bi1-1-4.png", desc: "【倒數_4】<br>【謝幕曲】召喚1張『神聖獵鷹』到自己的戰場上。<br>消費1【策動】使這張卡片的倒數回合數-1。" },
+    { id: 285, name: "平靜的教會", class: "bishop", cost: 1, atk: "N/A", hp: "N/A", image:"images/bi1-1-5.png", desc: "【倒數_3】<br>【謝幕曲】由自己的牌堆中抽取2張卡片。<br>消費1【策動】使這張卡片的倒數回合數-1。" },
+    { id: 286, name: "純淨白狐", class: "bishop", cost: 2, atk: "1", hp: "3", image:"images/bi1-1-6.png", desc: "【守護】" },
+    { id: 287, name: "潛伏的曼紐", class: "bishop", cost: 2, atk: "2", hp: "2", image:"images/bi1-2-1.png", desc: "【光紋】<br>當自己進行護符卡的【策動】時，到回合結束為止，使這張卡片+1/+0。" },
+    { id: 288, name: "煌槍月兔妖‧薩莉沙", class: "bishop", cost: 2, atk: "2", hp: "2", image:"images/bi1-2-2.png", desc: "當自己擁有【守護】的從者卡被破壞時，使這張卡片+1/+1。<br>【進化時】使這張卡片獲得【障壁】。" },
+    { id: 289, name: "惡意的神諭‧達姆斯", class: "bishop", cost: 2, atk: "2", hp: "2", image:"images/bi1-2-3.png", desc: "【入場曲】指定1張敵方戰場上的從者卡。使其獲得「自己的回合結束時，破壞這張卡片」。" },
+    { id: 290, name: "安息的肯定者", class: "bishop", cost: 2, atk: "0", hp: "4", image:"images/bi1-2-4.png", desc: "【入場曲】使自己獲得『紋章：安息的肯定者』。<br>紋章<br>【倒數_4】<br>自己的回合結束時，如果本回合中自己的從者卡未進行攻擊，則會隨機使1張自己戰場上的從者卡-2/-0並獲得【守護】。" },
+    { id: 291, name: "聖騎士的團員", class: "bishop", cost: 2, atk: "2", hp: "2", image:"images/bi1-2-5.png", desc: "【守護】<br>當這張卡片的攻擊力或生命值在戰場上因「+」而增加時，回復自己的主戰者1點生命值。" },
+    { id: 292, name: "清廉的修道女‧拉姆瑞塔", class: "bishop", cost: 2, atk: "1", hp: "4", image:"images/bi1-2-6.png", desc: "自己的回合結束時，如果這張卡片已進化，則會給予戰場上全部的從者卡2點傷害。<br>【進化時】到回合結束為止，使這張卡片獲得「無法攻擊從者或主戰者」。" },
+    { id: 293, name: "禁密的聖地", class: "bishop", cost: 2, atk: "N/A", hp: "N/A", image:"images/bi1-3-1.png", desc: "消費1【策動】指定1張自己戰場上的從者卡。使其+1/+1。回復自己的主戰者1點生命值。" },
+    { id: 294, name: "野獸公主的誓約", class: "bishop", cost: 2, atk: "N/A", hp: "N/A", image:"images/bi1-3-2.png", desc: "【倒數_2】<br>【謝幕曲】召喚1張『聖炎猛虎』到自己的戰場上。<br>消費1【策動】使這張卡片的倒數回合數-1。" },
+    { id: 295, name: "輝光香爐", class: "bishop", cost: 2, atk: "N/A", hp: "N/A", image:"images/bi1-3-3.png", desc: "消費1【策動】破壞這張卡片。回復自己的主戰者4點生命值。" },
+    { id: 296, name: "聖心之光稜牧師", class: "bishop", cost: 3, atk: "2", hp: "2", image:"images/bi1-3-4.png", desc: "【入場曲】由自己的牌堆中抽取1張護符卡。<br>【進化時】指定1張自己手牌中的護符卡。使其消費-1。" },
+    { id: 297, name: "聖盾神官", class: "bishop", cost: 3, atk: "2", hp: "1", image:"images/bi1-3-5.png", desc: "【守護】<br>【障壁】" },
+    { id: 298, name: "猛碎的聖職者", class: "bishop", cost: 3, atk: "2", hp: "4", image:"images/bi1-3-6.png", desc: "【守護】<br>【進化時】指定1張敵方戰場上已超進化的從者卡。將其破壞。" },
+    { id: 299, name: "彈雨驅魔師‧珂蕾特", class: "bishop", cost: 3, atk: "2", hp: "2", image:"images/bi1-4-1.png", desc: "【入場曲】發動1次「隨機給予1張敵方戰場上的從者卡2點傷害」。如果自己戰場上的護符卡張數為2以上，則會由原本的1次轉變為2次。" },
+    { id: 300, name: "安息的祈禱者", class: "bishop", cost: 3, atk: "1", hp: "4", image:"images/bi1-4-2.png", desc: "【入場曲】使自己獲得『紋章：安息的祈禱者』。<br>【守護】<br>紋章<br>【倒數_4】<br>自己的回合結束時，如果本回合中自己的從者卡未進行攻擊，則會回復自己的主戰者1點生命值。" },
+    { id: 301, name: "英雄幻視‧特爾", class: "bishop", cost: 3, atk: "2", hp: "1", image:"images/bi1-4-3.png", desc: "【疾馳】<br>當自己進行護符卡的【策動】時，使這張卡片獲得【吸血】。" },
+    { id: 302, name: "土之攝理‧嘉列翁", class: "bishop", cost: 3, atk: "5", hp: "5", image:"images/bi1-4-4.png", desc: "【守護】<br>無法攻擊從者或主戰者。<br>自己的回合結束時，如果為已超進化解禁的回合，則會隨機使1張自己戰場上「本回合中未進行攻擊且為進化前的從者卡」進化。" },
+    { id: 303, name: "聖潔注射", class: "bishop", cost: 3, atk: "N/A", hp: "N/A", image:"images/bi1-4-5.png", desc: "【策動】破壞這張卡片。指定1張敵方戰場上的從者卡。給予其4點傷害。回復自己的主戰者1點生命值。" },
+    { id: 304, name: "安息的神殿", class: "bishop", cost: 3, atk: "N/A", hp: "N/A", image:"images/bi1-4-6.png", desc: "【倒數_4】<br>【謝幕曲】回復自己的主戰者2點生命值。使自己的主戰者獲得【障壁】。<br>【策動】使這張卡片的倒數回合數-X。X為「自己的紋章數」。" },
+    { id: 305, name: "展翼獅像", class: "bishop", cost: 3, atk: "N/A", hp: "N/A", image:"images/bi1-5-1.png", desc: "【倒數_3】<br>【謝幕曲】召喚1張『神聖獵鷹』與1張『聖炎猛虎』到自己的戰場上。<br>消費1【策動】使這張卡片的倒數回合數-1。" },
+    { id: 306, name: "蕾菲爾的寶石", class: "bishop", cost: 3, atk: "N/A", hp: "N/A", image:"images/bi1-5-2.png", desc: "【策動】破壞這張卡片。指定1個【模式】並發動該能力。<br>（1）隨機破壞1張敵方戰場上的從者卡。<br>（2）由自己的牌堆中抽取2張卡片。" },
+    { id: 307, name: "飛翼戰士", class: "bishop", cost: 4, atk: "4", hp: "4", image:"images/bi1-5-3.png", desc: "【入場曲】指定1張自己戰場上的其他從者卡。使其+1/+1。<br>【進化時】發動與【入場曲】相同的能力。" },
+    { id: 308, name: "鐵拳神父", class: "bishop", cost: 4, atk: "5", hp: "4", image:"images/bi1-5-4.png", desc: "【進化時】指定1張敵方戰場上生命值為3以下的從者卡。使其消失。<br>【超進化時】由原本的指定1張轉變為全部。" },
+    { id: 309, name: "煌羽翼族‧莉諾", class: "bishop", cost: 4, atk: "3", hp: "5", image:"images/bi1-5-5.png", desc: "【交戰時】給予敵方的主戰者1點傷害。<br>【超進化時】使這張卡片獲得「1回合中可進行2次攻擊」。" },
+    { id: 310, name: "禁密天宮‧羅納威洛", class: "bishop", cost: 4, atk: "1", hp: "3", image:"images/bi1-5-6.png", desc: "【潛行】<br>【進化時】指定1張敵方戰場上的從者卡。將其破壞。" },
+    { id: 311, name: "絕望的顯現‧瑪文", class: "bishop", cost: 4, atk: "4", hp: "4", image:"images/bi2-1-1.png", desc: "【入場曲】增加1張『絕望的奔流』到自己的手牌中。<br>【進化時】使自己獲得『紋章：絕望的顯現‧瑪文』。<br>紋章<br>自己的回合結束時，如果本回合中自己的從者卡未進行攻擊，則會對敵方戰場上全部的從者卡與敵方的主戰者分配X點傷害。X為「自己的紋章數」。" },
+    { id: 312, name: "砂神的巫女‧莎拉", class: "bishop", cost: 4, atk: "4", hp: "10", image:"images/bi2-1-2.png", desc: "【爆能強化_6】使這張卡片+0/+10。【守護】<br>【進化時】指定1張敵方戰場上已受到傷害的從者卡。將其破壞。" },
+    { id: 313, name: "賽恩教的僧侶‧蘇菲雅", class: "bishop", cost: 4, atk: "3", hp: "5", image:"images/bi2-1-3.png", desc: "【入場曲】隨機將1張「自己牌堆中消費為2以下的主教‧從者卡」召喚到自己的戰場上。<br>【超進化時】使自己戰場上全部的其他從者卡獲得【障壁】。" },
+    { id: 314, name: "癲狂之恩寵", class: "bishop", cost: 4, atk: "N/A", hp: "N/A", image:"images/bi2-1-4.png", desc: "回復自己的主戰者10點生命值。使自己獲得『紋章：癲狂之恩寵』。<br>紋章<br>【倒數_2】<br>【謝幕曲】給予自己的主戰者10點傷害。" },
+    { id: 315, name: "聖潔閃光", class: "bishop", cost: 4, atk: "N/A", hp: "N/A", image:"images/bi2-1-5.png", desc: "給予敵方戰場上全部的從者卡3點傷害。<br>【爆能強化_8】由自己的牌堆中抽取3張卡片。回復自己的主戰者3點生命值。" },
+    { id: 316, name: "鳥像的投影", class: "bishop", cost: 4, atk: "N/A", hp: "N/A", image:"images/bi2-1-6.png", desc: "【倒數_2】<br>【謝幕曲】召喚1張『壯麗大神隼』到自己的戰場上。<br>消費2【策動】使這張卡片的倒數回合數-2。" },
+    { id: 317, name: "閃耀的絕念", class: "bishop", cost: 4, atk: "N/A", hp: "N/A", image:"images/bi2-2-1.png", desc: "【倒數_4】<br>【謝幕曲】對敵方戰場上全部的從者卡與敵方的主戰者分配4點傷害。回復自己的主戰者4點生命值。<br>【策動】使這張卡片的倒數回合數-X。X為「自己的紋章數」。" },
+    { id: 318, name: "邁向蒼空之艇", class: "bishop", cost: 4, atk: "N/A", hp: "N/A", image:"images/bi2-2-2.png", desc: "於手牌中發動。當自己進行護符卡的【策動】時，使這張卡片的消費-1。<br>【策動】破壞這張卡片。指定1張自己戰場上進化前的從者卡。使其進化。" },
+    { id: 319, name: "給予指引的光輝天使", class: "bishop", cost: 5, atk: "2", hp: "3", image:"images/bi2-2-3.png", desc: "【入場曲】由自己的牌堆中抽取2張卡片。回復自己的主戰者2點生命值。" },
+    { id: 320, name: "水之守護神‧莎蕾樺", class: "bishop", cost: 5, atk: "3", hp: "3", image:"images/bi2-2-4.png", desc: "【入場曲】回復自己的主戰者3點生命值。<br>【守護】<br>【進化時】給予敵方戰場上全部的從者卡3點傷害。" },
+    { id: 321, name: "潔癖的審判者", class: "bishop", cost: 5, atk: "4", hp: "4", image:"images/bi2-2-5.png", desc: "【入場曲】指定1張敵方戰場上的從者卡。使其消失。" },
+    { id: 322, name: "速斷之刃‧阿尼耶絲", class: "bishop", cost: 5, atk: "3", hp: "4", image:"images/bi2-2-6.png", desc: "【疾馳】<br>【攻擊時】如果自己戰場上的護符卡張數為2以上，則會隨機破壞1張敵方戰場上非交戰對象的從者卡。" },
+    { id: 323, name: "安息的團結者", class: "bishop", cost: 5, atk: "2", hp: "5", image:"images/bi2-3-1.png", desc: "【入場曲】指定1張敵方戰場上的從者卡。將其破壞。<br>【進化時】使自己獲得『紋章：安息的團結者』。<br>紋章<br>【倒數_4】<br>自己的回合結束時，如果本回合中自己的從者卡未進行攻擊，則會由自己的牌堆中抽取1張生命值為4的從者卡。" },
+    { id: 324, name: "治癒的修女", class: "bishop", cost: 6, atk: "3", hp: "5", image:"images/bi2-3-2.png", desc: "【入場曲】回復自己的主戰者5點生命值。<br>【守護】" },
+    { id: 325, name: "終焉之白骨聖堂教主", class: "bishop", cost: 6, atk: "4", hp: "4", image:"images/bi2-3-3.png", desc: "【入場曲】破壞自己戰場上全部的護符卡。給予敵方戰場上全部的從者卡與敵方的主戰者X點傷害。X為「這張卡片所破壞的張數」。" },
+    { id: 326, name: "哀泣的聖騎士‧維爾伯特", class: "bishop", cost: 6, atk: "4", hp: "6", image:"images/bi2-3-4.png", desc: "【守護】<br>【謝幕曲】召喚2張『聖騎兵』到自己的戰場上。<br>【進化時】使自己獲得『紋章：哀泣的聖騎士‧維爾伯特』。<br>紋章<br>當自己擁有【守護】的從者卡進入戰場時，使其+1/+2。" },
+    { id: 327, name: "安息的繼承者‧希彌佳", class: "bishop", cost: 6, atk: "0", hp: "4", image:"images/bi2-3-5.png", desc: "【入場曲】使自己獲得『紋章：安息的繼承者‧希彌佳』。<br>【超進化時】使敵方戰場上全部的從者卡攻擊力轉變為4。<br>紋章<br>【倒數_4】<br>自己的回合結束時，如果自己戰場上有『安息的繼承者‧希彌佳』，則會隨機使X張敵方戰場上攻擊力為4以下的從者卡獲得「無法攻擊從者或主戰者」與「自己的回合結束時，使這張卡片消失」。X為「自己的紋章數」。" },
+    { id: 328, name: "銳羽四射", class: "bishop", cost: 6, atk: "N/A", hp: "N/A", image:"images/bi2-3-6.png", desc: "給予敵方戰場上全部的從者卡3點傷害。召喚1張『神聖獵鷹』到自己的戰場上。" },
+    { id: 329, name: "邪教之器", class: "bishop", cost: 6, atk: "N/A", hp: "N/A", image:"images/bi2-4-1.png", desc: "【策動】破壞這張卡片。破壞戰場上全部的從者卡。" },
+    { id: 330, name: "大地守護神‧宓唯", class: "bishop", cost: 7, atk: "5", hp: "7", image:"images/bi2-4-2.png", desc: "【守護】<br>【謝幕曲】隨機召喚1張與「本次對戰中自己已被破壞且原始消費最高的護符卡」同名的卡片到自己的戰場上。" },
+    { id: 331, name: "裁決的弒滅者‧羅德歐", class: "bishop", cost: 7, atk: "5", hp: "5", image:"images/bi2-4-3.png", desc: "【入場曲】指定1張自己手牌中的卡片。將其捨棄。隨機將3種「自己牌堆中消費為3以下的護符卡」召喚到自己的戰場上。<br>【超進化時】隨機破壞1張敵方戰場上攻擊力最高的從者卡。給予敵方戰場上全部的從者卡1點傷害。" },
+    { id: 332, name: "天之守護神‧埃忒耳", class: "bishop", cost: 7, atk: "2", hp: "4", image:"images/bi2-4-4.png", desc: "【入場曲】隨機將3種「自己牌堆中消費為3以下的從者卡」召喚到自己的戰場上。<br>【守護】<br>【超進化時】使自己戰場上全部的其他從者卡+0/+2並獲得【光紋】。" },
+    { id: 333, name: "聖輝獅鷲獸", class: "bishop", cost: 8, atk: "6", hp: "8", image:"images/bi2-4-5.png", desc: "【守護】<br>當自己進行護符卡的【策動】時，使這張卡片獲得【疾馳】。" },
+    { id: 334, name: "崇高的熾天使‧勒碧絲", class: "bishop", cost: 8, atk: "7", hp: "6", image:"images/bi2-4-6.png", desc: "【謝幕曲】使自己獲得『紋章：崇高的熾天使‧勒碧絲』。<br>紋章<br>【倒數_2】<br>【謝幕曲】召喚1張『崇高的熾天使‧勒碧絲』到自己的戰場上。使其獲得【疾馳】。" },
+    { id: 335, name: "純白聖女‧貞德", class: "bishop", cost: 8, atk: "6", hp: "6", image:"images/bi2-5-1.png", desc: "【入場曲】給予敵方戰場上全部的從者卡6點傷害。使自己戰場上全部的其他從者卡+2/+4。<br>【守護】" },
+    { id: 336, name: "威儀的星晶騎士‧薇拉", class: "bishop", cost: 8, atk: "6", hp: "8", image:"images/bi2-5-2.png", desc: "【入場曲】指定2張敵方戰場上的從者卡。使其消失。【解放奧義】使這張卡片超進化。<br>【守護】<br>受到的傷害為4以上時轉變為3。" },
+
+    { id: 337, name: "熱忱的發明家‧伊俐思", class: "nemesis", cost: 1, atk: "1", hp: "1", image:"images/ne1-1-1.png", desc: "【謝幕曲】增加1張『過往之核』到自己的手牌中。" },
+    { id: 338, name: "線偶貓", class: "nemesis", cost: 1, atk: "1", hp: "1", image:"images/ne1-1-2.png", desc: "【入場曲】如果自己戰場上有已超進化的從者卡，則會增加1張『懸絲人偶』到自己的手牌中。使其+3/+0。<br>【突進】" },
+    { id: 339, name: "創造物的蓄能", class: "nemesis", cost: 1, atk: "N/A", hp: "N/A", image:"images/ne1-1-3.png", desc: "增加1張『未來之核』與1張『過往之核』到自己的手牌中。" },
+    { id: 340, name: "伊卡洛斯的飛翔", class: "nemesis", cost: 1, atk: "N/A", hp: "N/A", image:"images/ne1-1-4.png", desc: "指定1張自己手牌中的創造物‧從者卡。使其獲得【突進】與「【謝幕曲】由自己的牌堆中抽取1張卡片」。" },
+    { id: 341, name: "傀儡長槍手", class: "nemesis", cost: 2, atk: "2", hp: "1", image:"images/ne1-1-5.png", desc: "【入場曲】增加1張『改良型‧懸絲人偶』到自己的手牌中。" },
+    { id: 342, name: "電鞭揮擊者", class: "nemesis", cost: 2, atk: "1", hp: "3", image:"images/ne1-1-6.png", desc: "【入場曲】增加1張『過往之核』到自己的手牌中。" },
+    { id: 343, name: "永彈槍手", class: "nemesis", cost: 2, atk: "2", hp: "2", image:"images/ne1-2-1.png", desc: "【入場曲】增加1張『未來之核』到自己的手牌中。<br>【進化時】指定1張敵方戰場上的從者卡。給予其3點傷害。" },
+    { id: 344, name: "執愛的操偶師", class: "nemesis", cost: 2, atk: "2", hp: "2", image:"images/ne1-2-2.png", desc: "【入場曲】增加1張『懸絲人偶』到自己的手牌中。<br>【進化時】發動與【入場曲】相同的能力。" },
+    { id: 345, name: "無心虐殺者‧菲亞", class: "nemesis", cost: 2, atk: "1", hp: "1", image:"images/ne1-2-3.png", desc: "【入場曲】指定1張自己手牌中的人偶‧從者卡。使其變身為『虐殺人偶』。<br>【必殺】" },
+    { id: 346, name: "暗獄殘光‧賈絲珀", class: "nemesis", cost: 2, atk: "2", hp: "2", image:"images/ne1-2-4.png", desc: "【入場曲】增加1張『過往之核』到自己的手牌中。<br>【進化時】指定1張自己手牌中的創造物‧從者卡。使其獲得【守護】與「無法被能力破壞」。" },
+    { id: 347, name: "破壞的祈禱者", class: "nemesis", cost: 2, atk: "2", hp: "2", image:"images/ne1-2-5.png", desc: "【入場曲】指定1張自己戰場上的其他卡片。如果完成指定，則會將其破壞。隨機給予1張敵方戰場上的從者卡2點傷害。<br>【進化時】發動與【入場曲】相同的能力。" },
+    { id: 348, name: "爆燃的總長‧翼", class: "nemesis", cost: 2, atk: "3", hp: "1", image:"images/ne1-2-6.png", desc: "【入場曲】使自己手牌中全部的奧義量條+1。,br>【突進】" },
+    { id: 349, name: "報恩的技師‧艾札克", class: "nemesis", cost: 2, atk: "2", hp: "2", image:"images/ne1-3-1.png", desc: "【謝幕曲】增加1張『進攻的創造物』到自己的手牌中。" },
+    { id: 350, name: "生命的奔流", class: "nemesis", cost: 2, atk: "N/A", hp: "N/A", image:"images/ne1-3-2.png", desc: "指定1張敵方戰場上的從者卡。給予其3點傷害。增加1張『過往之核』到自己的手牌中。" },
+    { id: 351, name: "殲滅的歌聲", class: "nemesis", cost: 2, atk: "N/A", hp: "N/A", image:"images/ne1-3-3.png", desc: "指定1張自己戰場上的卡片。將其破壞。召喚1張『新約‧白之章』到自己的戰場上。" },
+    { id: 352, name: "人偶劇院", class: "nemesis", cost: 2, atk: "N/A", hp: "N/A", image:"images/ne1-3-4.png", desc: "【入場曲】增加1張『懸絲人偶』到自己的手牌中。<br>【倒數_2】<br>自己的回合結束時，增加1張『懸絲人偶』到自己的手牌中。" },
+    { id: 353, name: "創造物彈射裝置", class: "nemesis", cost: 2, atk: "N/A", hp: "N/A", image:"images/ne1-3-5.png", desc: "【入場曲】增加1張『未來之核』到自己的手牌中。<br>消費3【策動】破壞這張卡片。指定1張自己手牌中消費為5以下的創造物‧從者卡。將其複製1張並召喚到自己的戰場上。使其獲得「敵方的回合結束時，破壞這張卡片」。" },
+    { id: 354, name: "破壞的荒野", class: "nemesis", cost: 2, atk: "N/A", hp: "N/A", image:"images/ne1-3-6.png", desc: "【入場曲】指定1張自己戰場上的其他卡片。如果完成指定，則會將其破壞。由自己的牌堆中抽取2張卡片。<br>【謝幕曲】由自己的牌堆中抽取1張卡片。" },
+    { id: 355, name: "砲擊貓獸人", class: "nemesis", cost: 3, atk: "3", hp: "2", image:"images/ne1-4-1.png", desc: "【入場曲】增加1張『未來之核』到自己的手牌中。<br>【突進】" },
+    { id: 356, name: "機偶暗殺者", class: "nemesis", cost: 3, atk: "2", hp: "2", image:"images/ne1-4-2.png", desc: "【入場曲】增加1張『改良型‧懸絲人偶』到自己的手牌中。<br>當自己的人偶‧從者卡進入戰場時，每個自己的回合僅限發動1次，使其獲得【必殺】。" },
+    { id: 357, name: "決意之志‧米莉亞姆", class: "nemesis", cost: 3, atk: "2", hp: "3", image:"images/ne1-4-3.png", desc: "【入場曲】增加1張『未來之核』與1張『過往之核』到自己的手牌中。<br>【進化時】發動與【入場曲】相同的能力。" },
+    { id: 358, name: "嶄新的少女‧歐絲", class: "nemesis", cost: 3, atk: "3", hp: "3", image:"images/ne1-4-4.png", desc: "【入場曲】由自己的牌堆中抽取1張卡片。<br>【進化時】使自己獲得『紋章：嶄新的少女‧歐絲』。<br>紋章<br>【倒數_3】<br>自己的回合結束時，如果自己手牌中的卡片張數為5以下，則會由自己的牌堆中抽取1張卡片。如果為6以上，則會回復自己的主戰者1點生命值。" },
+    { id: 359, name: "破壞的繼承者‧阿克西雅", class: "nemesis", cost: 3, atk: "2", hp: "4", image:"images/ne1-4-5.png", desc: "【守護】<br>無法被能力破壞。<br>【超進化時】給予敵方的主戰者X點傷害。X為「自己戰場上其他卡片的張數」。破壞自己戰場上全部的其他卡片。" },
+    { id: 360, name: "重振旗鼓的夜王‧翔", class: "nemesis", cost: 3, atk: "2", hp: "1", image:"images/ne1-4-6.png", desc: "【入場曲】如果為已超進化解禁的回合，則會使這張卡片獲得【障壁】。<br>【疾馳】" },
+    { id: 361, name: "人偶替身術", class: "nemesis", cost: 3, atk: "N/A", hp: "N/A", image:"images/ne1-5-1.png", desc: "召喚2張『改良型‧懸絲人偶』到自己的戰場上。" },
+    { id: 362, name: "碎石烈槍", class: "nemesis", cost: 3, atk: "N/A", hp: "N/A", image:"images/ne1-5-2.png", desc: "發動6次「隨機給予1張敵方戰場上的從者卡1點傷害」。" },
+    { id: 363, name: "奮戰領袖‧露琪娜", class: "nemesis", cost: 4, atk: "3", hp: "3", image:"images/ne1-5-3.png", desc: "【入場曲】增加1張『未來之核』與1張『過往之核』到自己的手牌中。<br>【進化時】召喚1張『進攻的創造物』到自己的戰場上。" },
+    { id: 364, name: "破壞的肯定者", class: "nemesis", cost: 4, atk: "4", hp: "4", image:"images/ne1-5-4.png", desc: "【入場曲】使這張卡片+X/+X。X為「自己戰場上其他卡片的張數」。破壞自己戰場上全部的其他卡片。<br>【守護】" },
+    { id: 365, name: "奏絕的顯現‧里榭娜", class: "nemesis", cost: 4, atk: "2", hp: "4", image:"images/ne1-5-5.png", desc: "【入場曲】增加1張『奏絕的獨唱』到自己的手牌中。<br>無法被能力破壞。<br>【進化時】召喚1張『新約‧白之章』到自己的戰場上。" },
+    { id: 366, name: "異次元的槍擊", class: "nemesis", cost: 4, atk: "", hp: "", image:"images/ne1-5-6.png", desc: "指定1張敵方戰場上的從者卡。將其破壞。增加1張『未來之核』與1張『過往之核』到自己的手牌中。" },
+    { id: 367, name: "躍線狂襲", class: "nemesis", cost: 4, atk: "N/A", hp: "N/A", image:"images/ne2-1-1.png", desc: "指定1張敵方戰場上的從者卡。將其破壞。增加2張『懸絲人偶』到自己的手牌中。" },
+    { id: 368, name: "魔鋼騎兵", class: "nemesis", cost: 5, atk: "4", hp: "4", image:"images/ne2-1-2.png", desc: "【守護】<br>【進化時】召喚1張『魔鋼騎兵』到自己的戰場上。<br>【超進化時】由原本的1張轉變為2張。" },
+    { id: 369, name: "鋼鐵傭兵‧迪爾克", class: "nemesis", cost: 5, atk: "5", hp: "5", image:"images/ne2-1-3.png", desc: "【入場曲】召喚1張『堡壘的創造物』到自己的戰場上。" },
+    { id: 370, name: "改境天宮‧亞露愛得", class: "nemesis", cost: 5, atk: "2", hp: "4", image:"images/ne2-1-4.png", desc: "【入場曲】增加1張『未來之核』與1張『過往之核』到自己的手牌中。<br>【進化時】指定1張自己手牌中消費為5以下的創造物‧從者卡。將其複製1張並召喚到自己的戰場上。" },
+    { id: 371, name: "絕望君主‧阿紀摩", class: "nemesis", cost: 5, atk: "3", hp: "3", image:"images/ne2-1-5.png", desc: "【進化時】指定1張敵方戰場上攻擊力為4以下的從者卡。使其消失，並將其複製1張後召喚到自己的戰場上。" },
+    { id: 372, name: "交響之心‧枷薇", class: "nemesis", cost: 5, atk: "3", hp: "3", image:"images/ne2-1-6.png", desc: "【入場曲】召喚1張『維多利亞』到自己的戰場上。<br>當自己的人偶‧從者卡進入戰場時，使其獲得【守護】。<br>【進化時】召喚1張『改良型‧懸絲人偶』到自己的戰場上。" },
+    { id: 373, name: "實地考察的技師", class: "nemesis", cost: 5, atk: "3", hp: "4", image:"images/ne2-2-1.png", desc: "【入場曲】指定1張自己手牌中的卡片。將其捨棄。由自己的牌堆中抽取3張卡片。" },
+    { id: 374, name: "轟雷的閃狼‧尤斯堤斯", class: "nemesis", cost: 5, atk: "5", hp: "4", image:"images/ne2-2-2.png", desc: "【入場曲】【奧義】指定1張自己戰場上其他進化前的從者卡。使其與這張卡片進化。<br>【交戰時】給予交戰對象3點傷害。" },
+    { id: 375, name: "思慕蒼空的歸還者‧卡希烏斯", class: "nemesis", cost: 5, atk: "3", hp: "2", image:"images/ne2-2-3.png", desc: "【入場曲】指定1張自己手牌中的創造物‧從者卡。給予敵方戰場上全部的從者卡X點傷害。X為「所指定從者卡的攻擊力」。<br>【謝幕曲】增加1張『堡壘的創造物』到自己的手牌中。" },
+    { id: 376, name: "光之攝理‧盧歐", class: "nemesis", cost: 5, atk: "6", hp: "6", image:"images/ne2-2-4.png", desc: "【入場曲】發動6次「隨機給予1張敵方戰場上的從者卡1點傷害」。使敵方手牌中全部的從者卡+1/+0。【奧義】使自己獲得『紋章：光之攝理‧盧歐』。<br>紋章<br>【倒數_2】<br>當敵方擁有【疾馳】的從者卡對主戰者進行攻擊時，到回合結束為止，使其-3/-0。" },
+    { id: 377, name: "改境的重啟", class: "nemesis", cost: 5, atk: "N/A", hp: "N/A", image:"images/ne2-2-5.png", desc: "指定2張自己手牌中消費為5以下的創造物‧從者卡。將其複製1張並召喚到自己的戰場上。使其獲得「敵方的回合結束時，破壞這張卡片」。" },
+    { id: 378, name: "遺產的砲擊", class: "nemesis", cost: 5, atk: "N/A", hp: "N/A", image:"images/ne2-2-6.png", desc: "【入場曲】增加1張『未來之核』到自己的手牌中。<br>當自己進行【融合】時，隨機給予1張敵方戰場上的從者卡2點傷害。" },
+    { id: 379, name: "獸性鐵人", class: "nemesis", cost: 6, atk: "4", hp: "9", image:"images/ne2-3-1.png", desc: "【必殺】<br>【守護】" },
+    { id: 380, name: "殺意的絲線‧諾亞", class: "nemesis", cost: 6, atk: "5", hp: "6", image:"images/ne2-3-2.png", desc: "【入場曲】增加3張『懸絲人偶』到自己的手牌中。使自己手牌中全部的人偶‧從者卡+1/+0。" },
+    { id: 381, name: "箱庭斷罪者‧希爾薇婭", class: "nemesis", cost: 6, atk: "5", hp: "5", image:"images/ne2-3-3.png", desc: "【入場曲】指定1個【模式】並發動該能力。<br>（1）由自己的牌堆中抽取2張卡片。<br>（2）回復自己的主戰者4點生命值。<br>【進化時】指定1張敵方戰場上的從者卡。將其破壞。<br>【超進化時】由原本的1張轉變為2張。" },
+    { id: 382, name: "機刃劍士", class: "nemesis", cost: 6, atk: "4", hp: "5", image:"images/ne2-3-4.png", desc: "【入場曲】召喚1張『進攻的創造物』到自己的戰場上。增加1張『過往之核』到自己的手牌中。<br>【進化時】發動與【入場曲】相同的能力。" },
+    { id: 383, name: "心魂武藝‧迦爾拉", class: "nemesis", cost: 6, atk: "5", hp: "4", image:"images/ne2-3-5.png", desc: "【入場曲】指定1張自己手牌中消費為5以下的創造物‧從者卡。將其複製1張並召喚到自己的戰場上。<br>【超進化時】使這張卡片獲得「1回合中可進行2次攻擊」。" },
+    { id: 384, name: "破壞的團結者", class: "nemesis", cost: 6, atk: "3", hp: "3", image:"images/ne2-3-6.png", desc: "【入場曲】隨機破壞X張敵方戰場上的從者卡。X為「自己戰場上其他卡片的張數」。破壞自己戰場上全部的其他卡片。" },
+    { id: 385, name: "擁心共鬥", class: "nemesis", cost: 6, atk: "N/A", hp: "N/A", image:"images/ne2-4-1.png", desc: "召喚1張『洛伊德』與1張『維多利亞』到自己的戰場上。" },
+    { id: 386, name: "混沌軍勢", class: "nemesis", cost: 6, atk: "N/A", hp: "N/A", image:"images/ne2-4-2.png", desc: "給予敵方戰場上全部的從者卡與敵方的主戰者3點傷害。【解放奧義】由原本的3點傷害轉變為6點傷害。" },
+    { id: 387, name: "音速的飛行兵", class: "nemesis", cost: 7, atk: "3", hp: "3", image:"images/ne2-4-3.png", desc: "【入場曲】召喚1張『破滅的創造物γ』到自己的戰場上。<br>【進化時】指定1張自己戰場上的創造物‧從者卡。使其+3/+3。" },
+    { id: 388, name: "嚴厲的教官‧伊露莎", class: "nemesis", cost: 7, atk: "7", hp: "6", image:"images/ne2-4-4.png", desc: "【入場曲】指定1個【模式】並發動該能力。<br>（1）發動3次「隨機給予1張敵方戰場上的從者卡4點傷害」。<br>（2）給予敵方的主戰者4點傷害。" },
+    { id: 389, name: "邁步之心‧奧契絲", class: "nemesis", cost: 8, atk: "5", hp: "5", image:"images/ne2-4-5.png", desc: "【入場曲】召喚1張『洛伊德』到自己的戰場上。<br>當自己的人偶‧從者卡進入戰場時，使其獲得【疾馳】與【必殺】。<br>【超進化時】召喚2張『改良型‧懸絲人偶』到自己的戰場上。" },
+    { id: 390, name: "凌光星馳‧洛菈米亞", class: "nemesis", cost: 8, atk: "2", hp: "2", image:"images/ne2-4-6.png", desc: "【入場曲】指定3張自己手牌中消費為5以下的創造物‧從者卡。將其複製1張並召喚到自己的戰場上。<br>【超進化時】使自己戰場上全部的創造物‧從者卡+1/+1。" },
+    { id: 391, name: "癲狂創造者‧歷亞姆", class: "nemesis", cost: 9, atk: "7", hp: "7", image:"images/ne2-5-1.png", desc: "【入場曲】召喚3張『改良型‧懸絲人偶』到自己的戰場上。<br>【進化時】使自己戰場上全部的人偶‧從者卡獲得【守護】與「【謝幕曲】給予敵方的主戰者2點傷害」。" },
+    { id: 392, name: "統世之王‧巴力巴布", class: "nemesis", cost: 9, atk: "", hp: "", image:"images/ne2-5-2.png", desc: "【入場曲】指定2張敵方戰場上的從者卡。使其失去全部能力。給予其9點傷害。使敵方的主戰者獲得「使受到的傷害+1」。" },
+
+    { id: 393, name: "雙刃哥布林", class: "neutral", cost: 1, atk: "1", hp: "1", image:"images/all1-1-1.png", desc: "【入場曲】如果自己戰場上有已超進化的從者卡，則會指定1張敵方戰場上的從者卡。給予其4點傷害。" },
+    { id: 394, name: "不屈的劍鬥士", class: "neutral", cost: 2, atk: "2", hp: "2", image:"images/all1-1-2.png", desc: "【爆能強化_4】使這張卡片+3/+3。" },
+    { id: 395, name: "叮噹天使‧莉亞", class: "neutral", cost: 2, atk: "0", hp: "4", image:"images/all1-1-3.png", desc: "【守護】<br>【謝幕曲】由自己的牌堆中抽取1張卡片。<br>【進化時】由自己的牌堆中抽取1張卡片。" },
+    { id: 396, name: "貪婪的智天使‧露比", class: "neutral", cost: 2, atk: "2", hp: "2", image:"images/all1-1-4.png", desc: "【入場曲】指定1張自己手牌中的卡片。使其返回牌堆中。由自己的牌堆中抽取1張卡片。" },
+    { id: 397, name: "樂朗天宮‧斐爾特亞", class: "neutral", cost: 2, atk: "2", hp: "2", image:"images/all1-1-5.png", desc: "【進化時】指定1張敵方戰場上的從者卡。將其破壞。" },
+    { id: 398, name: "女僕天使‧伽芮塔", class: "neutral", cost: 2, atk: "2", hp: "2", image:"images/all1-1-6.png", desc: "【入場曲】如果為已超進化解禁的回合，則會使這張卡片+0/+3。<br>【守護】" },
+    { id: 399, name: "雷火雙神‧福尼加爾＆亞文哈爾", class: "neutral", cost: 2, atk: "2", hp: "2", image:"images/all1-2-1.png", desc: "【爆能強化_5】使這張卡片進化。<br>【謝幕曲】如果這張卡片已進化，則會隨機給予1張敵方戰場上的從者卡4點傷害。" },
+    { id: 400, name: "力抗悲嘆的少年", class: "neutral", cost: 2, atk: "1", hp: "3", image:"images/all1-2-2.png", desc: "於手牌中發動。當敵方的從者卡超進化時，使這張卡片獲得【必殺】。<br>【守護】" },
+    { id: 401, name: "惹人憐愛的搭檔‧碧", class: "neutral", cost: 2, atk: "2", hp: "2", image:"images/all1-2-3.png", desc: "【入場曲】如果為已超進化解禁的回合，則會使這張卡片進化。" },
+    { id: 402, name: "掌握蒼空命運的少女‧露莉亞", class: "neutral", cost: 2, atk: "1", hp: "1", image:"images/all1-2-4.png", desc: "【爆能強化_8】由自己的牌堆中抽取1張消費為7以上的從者卡。回復自己的PP 7點。<br>【障壁】" },
+    { id: 403, name: "反轉互換", class: "neutral", cost: 2, atk: "N/A", hp: "N/A", image:"images/all1-2-5.png", desc: "指定1張戰場上的從者卡。使其+2/-2。" },
+    { id: 404, name: "偵探的放大鏡", class: "neutral", cost: 2, atk: "N/A", hp: "N/A", image:"images/all1-2-6.png", desc: "【策動】破壞這張卡片。指定1張敵方戰場上的從者卡。使其失去【守護】。" },
+    { id: 405, name: "煌響使者‧亨莉雅妲", class: "neutral", cost: 3, atk: "3", hp: "3", image:"images/all1-3-1.png", desc: "【進化時】回復自己的主戰者2點生命值。<br>【超進化時】由原本的回復2點轉變為回復4點。" },
+    { id: 406, name: "觀察的偵探", class: "neutral", cost: 3, atk: "3", hp: "3", image:"images/all1-3-2.png", desc: "【謝幕曲】增加1張『偵探的放大鏡』到自己的手牌中。" },
+    { id: 407, name: "飛馳的光明‧阿波羅", class: "neutral", cost: 3, atk: "1", hp: "2", image:"images/all1-3-3.png", desc: "【入場曲】給予敵方戰場上全部的從者卡1點傷害。<br>【進化時】發動與【入場曲】相同的能力。" },
+    { id: 408, name: "颶風天技‧格里姆尼爾", class: "neutral", cost: 3, atk: "2", hp: "3", image:"images/all1-3-4.png", desc: "【入場曲】使自己獲得『紋章：颶風天技‧格里姆尼爾』。<br>【守護】<br>紋章<br>自己的回合結束時，如果自己戰場上有已超進化的從者卡，則會給予敵方戰場上全部的從者卡2點傷害。" },
+    { id: 409, name: "滿懷勇氣的少女", class: "neutral", cost: 3, atk: "3", hp: "1", image:"images/all1-3-5.png", desc: "於手牌中發動。當敵方的從者卡超進化時，使這張卡片獲得【疾馳】。<br>【突進】" },
+    { id: 410, name: "涸絕的顯現‧吉魯涅莉婕", class: "neutral", cost: 3, atk: "0", hp: "3", image:"images/all1-3-6.png", desc: "【入場曲】指定1張戰場上的其他從者卡。使其+2/-2。如果自己與敵方的PP最大值為10，則會增加1張『涸絕的甘露』到自己的手牌中。<br>【吸血】<br>【進化時】指定1張戰場上的從者卡。使其+2/-2。" },
+    { id: 411, name: "柯絲摩斯的使者‧尤妮", class: "neutral", cost: 3, atk: "3", hp: "3", image:"images/all1-4-1.png", desc: "【光紋】<br>自己的回合結束時，回復自己戰場上全部的從者卡與自己的主戰者1點生命值。" },
+    { id: 412, name: "熾天使的福音", class: "neutral", cost: 3, atk: "N/A", hp: "N/A", image:"images/all1-4-2.png", desc: "由自己的牌堆中抽取2張卡片。" },
+    { id: 413, name: "冒險者公會", class: "neutral", cost: 3, atk: "N/A", hp: "N/A", image:"images/all1-4-3.png", desc: "【入場曲】由自己的牌堆中抽取1張從者卡。<br>【策動】破壞這張卡片。指定1張自己戰場上的從者卡。使其獲得【突進】。" },
+    { id: 414, name: "試煉的石板", class: "neutral", cost: 3, atk: "N/A", hp: "N/A", image:"images/all1-4-4.png", desc: "【入場曲】使自己牌堆中重複的卡片消失，並各自保留1張。<br>【策動】由自己的牌堆中抽取1張卡片。" },
+    { id: 415, name: "威撼的歌利亞", class: "neutral", cost: 4, atk: "4", hp: "5", image:"images/all1-4-5.png", desc: "【守護】" },
+    { id: 416, name: "涸絕的使徒", class: "neutral", cost: 4, atk: "2", hp: "2", image:"images/all1-4-6.png", desc: "【入場曲】指定1張戰場上的其他從者卡。使其+4/-4。" },
+    { id: 417, name: "絕大的顯現‧馬塞班恩", class: "neutral", cost: 4, atk: "3", hp: "3", image:"images/all1-5-1.png", desc: "【入場曲】增加1張『絕大的證明』到自己的手牌中。<br>【進化時】使自己獲得『紋章：絕大的顯現‧馬塞班恩』。<br>紋章<br>當獲得這個紋章時，以【馬塞班恩牌組】取代自己牌堆中的卡片。使自己牌堆底部的死神卡片變身為勝利卡片。<br>自己的回合結束時，捨棄全部自己手牌中非『絕大的證明』的卡片。由自己的牌堆中抽取6張卡片。" },
+    { id: 418, name: "邁向蒼空的騎空士‧葛蘭＆吉塔", class: "neutral", cost: 4, atk: "3", hp: "2", image:"images/all1-5-2.png", desc: "【入場曲】指定1個【模式】並發動該能力。【奧義】使這張卡片進化。<br>（1）隨機給予1張敵方戰場上的從者卡5點傷害。<br>（2）由自己的牌堆中抽取2張從者卡。" },
+    { id: 419, name: "神之雷霆", class: "neutral", cost: 4, atk: "N/A", hp: "N/A", image:"images/all1-5-3.png", desc: "隨機破壞1張敵方戰場上攻擊力最高的從者卡。給予敵方戰場上全部的從者卡1點傷害。" },
+    { id: 420, name: "至高的凌駕", class: "neutral", cost: 4, atk: "N/A", hp: "N/A", image:"images/all1-5-4.png", desc: "由自己的牌堆中抽取3張卡片。如果自己的牌堆中沒有重複的卡片，則會回復自己的PP 3點。" },
+    { id: 421, name: "翱翔蒼空的捍衛者‧卡塔莉娜", class: "neutral", cost: 5, atk: "5", hp: "5", image:"images/all1-5-5.png", desc: "【入場曲】【奧義】隨機給予2張敵方戰場上的從者卡5點傷害。<br>【守護】<br>受到的傷害為4以上時轉變為3。" },
+    { id: 422, name: "哥布林的襲擊", class: "neutral", cost: 5, atk: "N/A", hp: "N/A", image:"images/all1-5-6.png", desc: "召喚5張『哥布林』到自己的戰場上。" },
+    { id: 423, name: "天司長的後繼者‧聖德芬", class: "neutral", cost: 6, atk: "7", hp: "6", image:"images/all2-1-1.png", desc: "於牌堆中發動。自己的回合開始時，如果本次對戰中自己的從者卡進化的次數為6以上，則會【瞬念召喚】這張卡片。<br>當這張卡片被【瞬念召喚】時，使自己獲得『紋章：天司長的後繼者‧聖德芬』。使這張卡片返回手牌中。<br>【入場曲】【解放奧義】發動5次「隨機給予1張敵方戰場上的從者卡或敵方的主戰者2點傷害」。<br>紋章<br>【倒數_2】<br>自己的回合結束時，回復自己戰場上全部的從者卡與自己的主戰者1點生命值。" },
+    { id: 424, name: "商隊猛瑪象", class: "neutral", cost: 7, atk: "10", hp: "10", image:"images/all2-1-2.png", desc: "" },
+    { id: 425, name: "毅勇的墮天使‧奧莉薇", class: "neutral", cost: 7, atk: "4", hp: "4", image:"images/all2-1-3.png", desc: "【入場曲】由自己的牌堆中抽取2張卡片。回復自己的主戰者2點生命值。回復自己的PP 2點。<br>【超進化時】指定1張自己戰場上其他進化前的從者卡。使其超進化。" },
+    { id: 426, name: "情誼天使‧蕾娜", class: "neutral", cost: 7, atk: "5", hp: "5", image:"images/all2-1-4.png", desc: "【進化時】使自己戰場上全部進化前的從者卡進化。" },
+    { id: 427, name: "命運的黃昏‧奧丁", class: "neutral", cost: 7, atk: "4", hp: "2", image:"images/all2-1-5.png", desc: "【入場曲】指定1張敵方戰場上的卡片。使其消失。<br>【疾馳】" },
+    { id: 428, name: "終末之罪‧撒旦", class: "neutral", cost: 10, atk: "10", hp: "10", image:"images/all2-1-6.png", desc: "【入場曲】以【啟示錄牌組】取代自己牌堆中的卡片。" },
+
 ];
 
 const grid = document.getElementById('card-grid');
@@ -1026,19 +1248,19 @@ const historyData = {
             {
                 name: "馬賽班恩妖精 <br>(マゼルバインエルフ)",
                 class: "elf",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/all-1-5-1.png", "images/el1-5-1.png"],
                 stats: [3, 1, 4, 3, 3]
             },
             {
                 name: "甲蟲妖精 <br>(リノエルフ)",
                 class: "elf",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/el1-5-2.png", "images/el1-2-5.png"],
                 stats: [5, 5, 1, 1, 1]
             },
             {
                 name: "艾茲迪亞妖精 <br>(エズディアエルフ)",
                 class: "elf",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/el2-4-6.png", "images/el2-4-5.png"],
                 stats: [3, 5, 2, 5, 2]
             },
             {
@@ -1050,37 +1272,37 @@ const historyData = {
             {
                 name: "混軸巫師 <br>(ハイウィッチ)",
                 class: "witch",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/wi2-3-5.png", "images/wi2-4-1.png"],
                 stats: [4, 4, 4, 5, 3]
             },
             {
                 name: "快攻龍族 <br>(アグロドラゴン)",
                 class: "dragon",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/dr2-1-3.png", "images/dr2-2-4.png"],
                 stats: [1, 4, 2, 3, 1]
             },
             {
                 name: "OTK幻想龍族 <br>(OTKドラゴン)",
                 class: "dragon",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/dr2-4-3.png", "images/all-1-5-1.png"],
                 stats: [3, 1, 3, 3, 2]
             },
             {
                 name: "模式夜魔 <br>(モードナイトメア)",
                 class: "abyss",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/ab1-2-4.png", "images/ab2-5-2.png"],
                 stats: [3, 3, 4, 5, 5]
             },
             {
                 name: "紋章主教 <br>(クレストビショップ)",
                 class: "bishop",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/bi2-1-1.png", "images/bi2-1-4.png"],
                 stats: [5, 5, 2, 5, 5]
             },
             {
                 name: "里榭娜復仇者 <br>(破壊ネメシス)",
                 class: "nemesis",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/ne1-5-5.png", "images/ne1-4-5.png"],
                 stats: [2, 4, 2, 3, 4]
             },
         ]
@@ -1091,49 +1313,49 @@ const historyData = {
             {
                 name: "甲蟲妖精 <br>(リノエルフ)",
                 class: "elf",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/el1-5-2.png", "images/el1-2-5.png"],
                 stats: [5, 5, 1, 1, 1]
             },
             {
                 name: "協作皇家 <br>(連携ロイヤル)",
                 class: "royal",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/ro2-3-5.png", "images/ro2-5-1.png"],
                 stats: [5, 3, 5, 1, 4]
             },
             {
                 name: "混軸巫師 <br>(ハイウィッチ)",
                 class: "witch",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/wi2-3-5.png", "images/wi2-4-1.png"],
                 stats: [4, 5, 4, 5, 3]
             },
             {
                 name: "小鳳龍族 <br>(ほーちゃんドラゴン)",
                 class: "dragon",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/dr2-4-3.png", "images/dr2-4-5.png"],
                 stats: [3, 3, 4, 4, 2]
             },
             {
                 name: "控制夜魔 <br>(コントロールナイトメア)",
                 class: "abyss",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/ab2-4-1.png", "images/ab2-4-6.png"],
                 stats: [4, 1, 4, 3, 4]
             },
             {
                 name: "守護主教 <br>(守護ビショップ)",
                 class: "bishop",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/bi2-3-4.png", "images/bi2-4-4.png"],
                 stats: [2, 1, 5, 3, 5]
             },
             {
                 name: "造物復仇者 <br>(アーティファクトネメシス)",
                 class: "nemesis",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/ne2-3-5.png", "images/ne2-4-6.png"],
                 stats: [3, 3, 3, 4, 2]
             },
             {
                 name: "人偶復仇者 <br>(人形ネメシス)",
                 class: "nemesis",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/ne2-1-6.png", "images/ne2-4-5.png"],
                 stats: [3, 4, 2, 1, 2]
             }
         ]
@@ -1144,31 +1366,31 @@ const historyData = {
             {
                 name: "甲蟲妖精 <br>(リノエルフ)",
                 class: "elf",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/el1-5-2.png", "images/el1-2-5.png"],
                 stats: [5, 5, 1, 1, 1]
             },
             {
                 name: "中速皇家 <br>(ミッドレンジロイヤル)",
                 class: "royal",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/ro2-2-5.png", "images/ro2-3-4.png"],
                 stats: [3, 4, 5, 1, 5]
             },
             {
                 name: "增幅巫師 <br>(スペルウィッチ)",
                 class: "witch",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/wi2-4-1.png", "images/all-2-1-6.png"],
                 stats: [4, 5, 4, 3, 4]
             },
             {
                 name: "造物復仇者 <br>(アーティファクトネメシス)",
                 class: "nemesis",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/ne2-1-4.png", "images/ne2-4-6.png"],
                 stats: [4, 4, 5, 4, 1]
             },
             {
                 name: "人偶復仇者 <br>(人形ネメシス)",
                 class: "nemesis",
-                images: ["images/ro1-5-2.png", "images/ro2-4-1.png"],
+                images: ["images/ne2-5-1.png", "images/ne2-4-5.png"],
                 stats: [4, 4, 3, 2, 3]
             }
 

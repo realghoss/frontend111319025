@@ -1168,3 +1168,83 @@ select, input {
 .vote-btn:disabled { 
     background: #333; color: #777; box-shadow: none; cursor: not-allowed; 
 }
+
+/* === 歷史頁面：右側懸浮面板 (左右並排版) === */
+
+/* 1. 定義右側面板容器 */
+.right-panel {
+    /* 改用 flex: 2 或更多，讓它佔據比左邊列表更大的空間 */
+    flex: 2; 
+    
+    /* 關鍵：橫向排列 (Row) */
+    display: flex;
+    flex-direction: row; 
+    gap: 20px; /* 兩個區塊中間的縫隙 */
+    align-items: flex-start; /* 對齊頂部 */
+
+    /* 黏貼設定 */
+    position: sticky;
+    position: -webkit-sticky;
+    top: 120px; /* 避開導覽列 */
+    
+    /* 高度設定為內容高度，不設固定高，讓內部自己撐開 */
+    height: fit-content; 
+}
+
+/* 2. 讓雷達圖和留言區平分寬度 */
+.chart-box, 
+#comments-section {
+    flex: 1; /* 各佔 50% */
+    min-width: 300px; /* 最小寬度，避免擠壓變形 */
+    margin: 0; /* 清除多餘邊距 */
+    background: #111;
+    z-index: 2;
+}
+
+/* 3. 修正雷達圖盒子的樣式 */
+.chart-box {
+    position: static !important;
+    border-radius: 12px;
+}
+
+/* 4. 留言區樣式優化 */
+#comments-section {
+    border-top: none !important;
+    padding: 15px;
+    border: 1px solid var(--accent-gold-dim);
+    border-radius: 12px;
+    
+    /* 讓留言區高度跟雷達圖差不多，或是固定高度 */
+    height: 450px; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* 5. 留言列表區域 */
+.comments-list {
+    flex: 1; /* 吃掉剩餘高度 */
+    overflow-y: auto; /* 只有留言列表會捲動 */
+    margin-bottom: 15px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+}
+
+/* === RWD 響應式修正 === */
+/* 當螢幕變窄 (例如筆電或平板直立) 時，右側面板變回垂直堆疊 */
+@media (max-width: 1300px) {
+    .right-panel {
+        flex-direction: column; /* 變回上下排列 */
+    }
+}
+
+/* 手機版：整個結構變成垂直流水帳 */
+@media (max-width: 900px) {
+    .decks-container {
+        flex-direction: column;
+    }
+    .right-panel {
+        position: static;
+        width: 100%;
+        flex-direction: column;
+    }
+}
