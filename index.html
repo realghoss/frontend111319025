@@ -1,10 +1,12 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-TW">
 
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shadowverse WB 攻略站</title>
+
 
     <link
         href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Noto+Serif+TC:wght@500;700&display=swap"
@@ -13,10 +15,13 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
+
 
     <header id="site-header" class="site-header nav-hidden">
         <a href="#" class="logo">Shadowverse WB</a>
+
 
         <ul class="nav-links">
             <li><a href="#" id="nav-home" class="active" onclick="switchPage('home')">首頁</a></li>
@@ -24,6 +29,8 @@
             <li><a href="#" id="nav-history" onclick="switchPage('history')">歷史卡組</a></li>
             <li><a href="#" id="nav-weekly" onclick="switchPage('weekly')">本週熱門卡組</a></li>
             <li><a href="#" id="nav-rules" onclick="switchPage('rules')">遊戲規則教學</a></li>
+            <li><a href="about.html" target="_blank">關於我們</a></li>
+            <li><a href="event.html" target="_blank">獲取遊戲</a></li>
             <li>
                 <button id="auth-btn" onclick="toggleSignIn()" class="login-btn">
                     登入 / 註冊
@@ -33,13 +40,16 @@
         </ul>
     </header>
 
+
     <main class="container">
+
 
         <section id="section-home" class="page-section">
             <div id="loader-screen">
                 <div class="loader"></div>
                 <p>系統連線中...</p>
             </div>
+
 
             <div id="start-overlay" style="display: none;">
                 <div class="start-content">
@@ -49,6 +59,7 @@
                 </div>
             </div>
 
+
             <div class="video-background">
                 <div id="player"></div>
                 <div class="video-overlay"></div>
@@ -56,7 +67,11 @@
 
 
 
+
+
+
             <div id="main-hero-content" class="hero-content-hidden">
+
 
                 <div class="hero-section" style="text-align: center; padding: 50px 0 150px 0;">
                     <h1
@@ -73,12 +88,16 @@
                     </button>
                 </div>
 
+
             </div>
+
 
             <div class="pv-section">
                 <h2 class="section-title">歷代版本 PV 回顧</h2>
 
+
                 <div class="pv-grid">
+
 
                     <div class="pv-item">
                         <h3>Legends Rise / 傳說揭幕</h3>
@@ -89,6 +108,7 @@
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                         </div>
+
 
                         <div class="pv-item">
                             <h3>Infinity Evolved / 無限進化</h3>
@@ -101,6 +121,7 @@
                             </div>
                         </div>
 
+
                         <div class="pv-item">
                             <h3>Heirs of the Omen / 絕傑的繼承者</h3>
                             <div class="video-wrapper">
@@ -111,6 +132,7 @@
                                     referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                             </div>
                         </div>
+
 
                         <div class="pv-item">
                             <h3>Skybound Dragons / 蒼空六龍</h3>
@@ -123,10 +145,13 @@
                             </div>
                         </div>
 
+
                     </div>
                 </div>
 
+
         </section>
+
 
         <section id="section-cards" class="page-section hidden">
             <div class="filter-bar">
@@ -143,6 +168,7 @@
                         <option value="neutral">中立 (Neutral)</option>
                     </select>
 
+
                     <select id="filter-cost">
                         <option value="all">所有費用</option>
                         <option value="1">1 費</option>
@@ -154,13 +180,16 @@
                         <option value="7">7 費+</option>
                     </select>
 
+
                     <input type="text" id="search-input" placeholder="輸入卡片名稱搜尋...">
                 </div>
             </div>
 
+
             <div id="card-grid" class="card-grid">
             </div>
         </section>
+
 
         <section id="section-history" class="page-section hidden">
             <div class="sidebar-layout">
@@ -173,15 +202,20 @@
                     </ul>
                 </aside>
 
+
                 <div class="content-area">
                     <h2 id="history-title" class="section-title">Ver 3.0 推薦牌組</h2>
 
+
                     <div class="decks-container">
+
 
                         <div id="history-list-container" class="deck-list">
                         </div>
 
+
                         <div class="right-panel">
+
 
                             <div class="chart-box">
                                 <h3 id="chart-title"
@@ -191,15 +225,18 @@
                                 <canvas id="radarChart"></canvas>
                             </div>
 
+
                             <div id="comments-section">
                                 <h3
                                     style="color: var(--accent-gold); font-family: var(--font-title); font-size: 1.2rem; margin-bottom: 10px;">
                                     <span id="comment-deck-name"></span> 戰術討論
                                 </h3>
 
+
                                 <div id="comments-list" class="comments-list">
                                     <p style="color: #666;">載入留言中...</p>
                                 </div>
+
 
                                 <div class="comment-input-area">
                                     <input type="text" id="comment-input" placeholder="登入後即可分享你的戰術心得..." disabled>
@@ -207,11 +244,13 @@
                                 </div>
                             </div>
 
+
                         </div>
                     </div>
                 </div>
             </div>
         </section>
+
 
         <section id="section-weekly" class="page-section hidden">
             <div class="sidebar-layout">
@@ -225,6 +264,7 @@
                             進化土法
                         </li>
                     </ul>
+
 
                     <h3 class="sidebar-title" style="margin-top: 30px;">Tier 1 (強勢)</h3>
                     <ul class="version-list weekly-tier-list">
@@ -245,6 +285,7 @@
                         </li>
                     </ul>
 
+
                     <h3 class="sidebar-title" style="margin-top: 30px;">Tier 2 (算還能打)</h3>
                     <ul class="version-list weekly-tier-list">
                         <li onclick="updateWeeklyView(this, 'midabyss')">
@@ -261,13 +302,16 @@
                         </li>
                     </ul>
 
+
                 </aside>
+
 
                 <div class="content-area">
                     <div class="weekly-hero">
                         <img id="weekly-img" src="images/decks/lootroyal.png" alt="Deck Screenshot">
                         <h2 id="weekly-title" class="weekly-title">財寶皇 - 運籌帷幄 最強進攻卡組</h2>
                     </div>
+
 
                     <div class="weekly-split">
                         <div class="weekly-guide">
@@ -276,11 +320,13 @@
                                 難度:困難<br>以財寶系列卡牌獲取財寶，再將財寶活用於各種情況的牌組。因為其不講理的【連續輸出】而穩坐T0位置，但同時也是個【節奏靈活/不穩定】的雙面刃。
                             </p>
 
+
                             <h3 style="margin-top: 20px;">核心思路</h3>
                             <p id="weekly-strat">
                                 起手留換盡量找「3/3/3歐克托莉絲」和任意2費牌，並依照對手的中盤舖場能力考慮抓解場對策。持續累計手牌，當集齊能連續打頭致死的輸出牌後，再連續打出，不留給對方喘息機會。
                             </p>
                         </div>
+
 
                         <div class="chart-box">
                             <h3 style="color:var(--accent-gold); text-align:center; margin-bottom:10px;">
@@ -290,9 +336,11 @@
                         </div>
                     </div>
 
+
                     <div id="voting-section"
                         style="margin-top: 40px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px;">
                         <h3 style="color: var(--accent-gold); text-align: center; margin-bottom: 20px;">人氣投票</h3>
+
 
                         <div
                             style="display: flex; align-items: center; justify-content: space-around; flex-wrap: wrap;">
@@ -302,11 +350,13 @@
                                     id="vote-count-display">0</div>
                                 <p style="color: #888; margin-bottom: 15px;">VOTES</p>
 
+
                                 <button id="vote-btn" onclick="castVote()" class="vote-btn" disabled>
                                     投給這一套
                                 </button>
                                 <p id="vote-msg" style="color: #ff6b6b; font-size: 0.9rem; margin-top: 10px;"></p>
                             </div>
+
 
                             <div style="width: 400px; max-width: 100%;">
                                 <canvas id="voteChart"></canvas>
@@ -317,9 +367,11 @@
             </div>
         </section>
 
+
         <section id="section-rules" class="page-section hidden">
             <div class="rules-container">
                 <h2 class="section-title" style="text-align: center;">新手入門指南</h2>
+
 
                 <div class="rules-list">
                     <div class="rule-item" onclick="openRuleModal('win')">
@@ -328,8 +380,9 @@
                             <h3>勝利條件 (Victory)</h3>
                             <p>如何將對手的體力歸零...</p>
                         </div>
-                        <span class="material-symbols-outlined arrow">arrow_forward_ios</span>
+                        <span class="material-symbols-outlined arrow"> </span>
                     </div>
+
 
                     <div class="rule-item" onclick="openRuleModal('pp')">
                         <span class="rule-number">02</span>
@@ -337,8 +390,9 @@
                             <h3>PP 點數機制 (Play Points)</h3>
                             <p>卡片費用的消耗與每回合回復...</p>
                         </div>
-                        <span class="material-symbols-outlined arrow">arrow_forward_ios</span>
+                        <span class="material-symbols-outlined arrow"> </span>
                     </div>
+
 
                     <div class="rule-item" onclick="openRuleModal('evo')">
                         <span class="rule-number">03</span>
@@ -346,17 +400,19 @@
                             <h3>進化系統 (Evolution)</h3>
                             <p>後攻第 4 回合開啟的關鍵機制...</p>
                         </div>
-                        <span class="material-symbols-outlined arrow">arrow_forward_ios</span>
+                        <span class="material-symbols-outlined arrow"> </span>
                     </div>
+
 
                     <div class="rule-item" onclick="openRuleModal('classes')">
                         <span class="rule-number">04</span>
                         <div class="rule-preview">
                             <h3>職業特性 (Classes)</h3>
-                            <p>八大職業的專屬機制簡介...</p>
+                            <p>七大職業的專屬機制簡介...</p>
                         </div>
-                        <span class="material-symbols-outlined arrow">arrow_forward_ios</span>
+                        <span class="material-symbols-outlined arrow"> </span>
                     </div>
+
 
                     <div class="rule-item" onclick="openRuleModal('hand')">
                         <span class="rule-number">05</span>
@@ -364,12 +420,64 @@
                             <h3>手牌上限 (Hand Size)</h3>
                             <p>手牌滿了會發生什麼事？</p>
                         </div>
-                        <span class="material-symbols-outlined arrow">arrow_forward_ios</span>
+                        <span class="material-symbols-outlined arrow"> </span>
                     </div>
+
+                    <div class="rule-item" onclick="openRuleModal('win1')"> <span class="rule-number">06</span>
+                        <div class="rule-preview">
+                            <h3>牌組限制 (Deck limit)</h3>
+                            <p>如何組建自己的牌組...</p>
+                        </div> <span class="material-symbols-outlined arrow"> </span>
+                    </div>
+
+                    <div class="rule-item" onclick="openRuleModal('win2')"> <span class="rule-number">07</span>
+                        <div class="rule-preview">
+                            <h3>進化點數 (PE)</h3>
+                            <p>進化點的用處...</p>
+                        </div> <span class="material-symbols-outlined arrow"> </span>
+                    </div>
+
+                    <div class="rule-item" onclick="openRuleModal('win3')"> <span class="rule-number">08</span>
+                        <div class="rule-preview">
+                            <h3>超進化點數 (SPE)</h3>
+                            <p>超進化點的用處...</p>
+                        </div> <span class="material-symbols-outlined arrow"> </span>
+                    </div>
+
+                    <div class="rule-item" onclick="openRuleModal('win4')"> <span class="rule-number">09</span>
+                        <div class="rule-preview">
+                            <h3>後攻的優勢 (PP+1)</h3>
+                            <p>先後手的差異...</p>
+                        </div> <span class="material-symbols-outlined arrow"> </span>
+                    </div>
+
+                    <div class="rule-item" onclick="openRuleModal('win5')"> <span class="rule-number">10</span>
+                        <div class="rule-preview">
+                            <h3>起手牌輪換 (Change cards)</h3>
+                            <p>如何替換手牌...</p>
+                        </div> <span class="material-symbols-outlined arrow"> </span>
+                    </div>
+
+                    <div class="rule-item" onclick="openRuleModal('win6')"> <span class="rule-number">11</span>
+                        <div class="rule-preview">
+                            <h3>奧義 (Invoke)</h3>
+                            <p>奧義系統是什麼...</p>
+                        </div> <span class="material-symbols-outlined arrow"> </span>
+                    </div>
+
+                    <div class="rule-item" onclick="openRuleModal('win7')"> <span class="rule-number">12</span>
+                        <div class="rule-preview">
+                            <h3>紋章 (Crest)</h3>
+                            <p>奧義系統是什麼...</p>
+                        </div> <span class="material-symbols-outlined arrow"> </span>
+                    </div>
+
+
 
                 </div>
             </div>
         </section>
+
 
         <div id="rule-modal" class="modal">
             <div class="modal-content text-modal-content">
@@ -380,7 +488,9 @@
             </div>
         </div>
 
+
     </main>
+
 
     <div id="card-modal" class="modal">
         <div class="modal-content">
@@ -392,9 +502,11 @@
                 <div class="modal-info">
                     <h2 id="modal-name">卡片名稱</h2>
 
+
                     <div class="stat-row-class">
                         <strong>職業:</strong> <span id="modal-class">-</span>
                     </div>
+
 
                     <div class="battle-stats">
                         <div class="stat-box">
@@ -411,6 +523,7 @@
                         </div>
                     </div>
 
+
                     <div class="card-desc">
                         <p id="modal-desc">效果文字...</p>
                     </div>
@@ -419,29 +532,39 @@
         </div>
     </div>
 
+
     <div id="volume-control-panel">
+
 
         <div id="slider-wrapper">
             <input type="range" id="volume-slider" min="0" max="100" value="50" oninput="changeVolume(this.value)">
         </div>
 
+
         <div id="volume-btn" onclick="toggleVolumePanel()">
             <span id="volume-icon">🔊</span>
         </div>
 
+
     </div>
+
+
+
 
 
 
     <footer class="site-footer">
         <div class="footer-container">
 
+
             <div class="footer-top">
                 <div class="footer-logo">SHADOWVERSE WB</div>
                 <p>本網站為粉絲製作之非官方攻略站，與 Cygames 無關。</p>
             </div>
 
+
             <div class="footer-divider"></div>
+
 
             <div class="footer-bottom">
                 <ul class="footer-links">
@@ -455,7 +578,9 @@
         </div>
     </footer>
 
+
     <script type="module" src="script.js"></script>
 </body>
+
 
 </html>

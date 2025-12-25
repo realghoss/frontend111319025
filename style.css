@@ -1,4 +1,4 @@
-/* --- 1. ??��??�???? (Variables) --- */
+/* --- 1. 全域變數 (Variables) --- */
 :root {
     --bg-color: #0a0a0a;
     --text-color: #e0e0e0;
@@ -10,7 +10,7 @@
     --font-body: 'Noto Serif TC', serif; 
 }
 
-/* --- 2. ??��?????�? (Reset) --- */
+/* --- 2. 重置與基礎設定 (Reset) --- */
 * {
     margin: 0;
     padding: 0;
@@ -24,9 +24,9 @@ body {
     line-height: 1.6;
 }
 
-/* --- 3. �?覽�?? (Navbar) --- */
+/* --- 3. 導覽列 (Navbar) --- */
 header {
-    /* �?�????�?�? */
+    /* 固定在頂部 */
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -38,10 +38,10 @@ header {
     width: 100%;
     height: 70px;
 
-    /* ???�? */
+    /* 內距 */
     padding: 0 2rem;
 
-    /* �?�? */
+    /* 背景與邊框 */
     background-color: var(--nav-bg);
     border-bottom: 2px solid var(--accent-gold-dim);
 }
@@ -84,19 +84,19 @@ header {
     color: #000 !important;
 }
 
-/* --- 4. ??�容容�?? --- */
+/* --- 4. 主要容器 (Container) --- */
 .container {
     /* 尺寸 */
     width: 100%;
     max-width: 1200px;
     min-height: 80vh;
 
-    /* ???�? */
+    /* 版面 */
     margin: 0 auto; /* 水平置中 */
     padding: 2rem;
 }
 
-/* --- 5. ???濾�?�工??��?? (Filter Bar) --- */
+/* --- 5. 篩選工具列 (Filter Bar) --- */
 .filter-bar {
     margin-bottom: 30px;
     padding: 20px;
@@ -120,29 +120,29 @@ select, input {
     font-family: var(--font-body);
 }
 
-/* --- 6. 網�?�系�? (Grid System) --- */
+/* --- 6. 網格系統 (Grid System) --- */
 .card-grid {
     display: grid;
-    /* ???�?: 8�? */
+    /* 預設: 8欄 */
     grid-template-columns: repeat(8, 1fr); 
     gap: 15px;
 }
 
-/* ??��??�???��?? (RWD) */
+/* 響應式設計 (RWD) */
 @media (max-width: 1400px) { .card-grid { grid-template-columns: repeat(6, 1fr); } }
 @media (max-width: 1100px) { .card-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 768px)  { .card-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 480px)  { .card-grid { grid-template-columns: repeat(2, 1fr); } }
 
-/* --- 7. ??�張??��?? (Card Item) --- */
+/* --- 7. 卡片樣式 (Card Item) --- */
 .card-item {
-    /* �?�? */
+    /* 定位 */
     position: relative;
     
     /* 尺寸 */
-    aspect-ratio: 3/4; /* 強�?��??�? */
+    aspect-ratio: 3/4; /* 強制比例 */
     
-    /* �?�? */
+    /* 外觀 */
     background: #222;
     border: 1px solid #333;
     border-radius: 6px;
@@ -163,14 +163,14 @@ select, input {
     object-fit: cover;
 }
 
-/* --- 8. �???��??�? (Modal) --- */
+/* --- 8. 彈窗 (Modal) --- */
 .modal {
-    /* �?�? */
+    /* 定位 */
     position: fixed;
     top: 0;
     left: 0;
     z-index: 2000;
-    display: none; /* ???設�?��?? */
+    display: none; /* 預設隱藏 */
     align-items: center;
     justify-content: center;
 
@@ -178,23 +178,23 @@ select, input {
     width: 100%;
     height: 100%;
 
-    /* �?�? */
+    /* 背景 */
     background-color: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(5px);
 }
 
 .modal-content {
-    /* �?�? */
+    /* 定位 */
     position: relative;
 
     /* 尺寸 */
     width: 80%;
     max-width: 800px;
 
-    /* ???�? */
+    /* 內距 */
     padding: 30px;
 
-    /* �?�? */
+    /* 外觀 */
     background-color: #151515;
     border: 2px solid var(--accent-gold);
     border-radius: 8px;
@@ -253,9 +253,9 @@ select, input {
     font-size: 1.1rem;
 }
 
-/* --- ??��??�?�???��?��???????��?? --- */
+/* --- 戰鬥數值與職業資訊 --- */
 
-/* ??�業???�?�? */
+/* 職業分類列 */
 .stat-row-class {
     font-size: 1.2rem;
     color: #bbb;
@@ -268,53 +268,53 @@ select, input {
     color: var(--accent-gold);
 }
 
-/* ??�鬥??��?�容??? (?????��??display: flex �?�????並�??) */
+/* 戰鬥數值容器 (Flex排版) */
 .battle-stats {
-    display: flex;       /* 橫�???????? */
-    gap: 15px;           /* �??????��??�??????????�? */
-    margin-bottom: 20px; /* ???�???��??述�??�????�???? */
+    display: flex;       /* 橫向排列 */
+    gap: 15px;           /* 元素間距 */
+    margin-bottom: 20px;
 }
 
-/* �?�??????��?��??�????�? */
+/* 數值方塊 */
 .stat-box {
-    flex: 1;             /* �??????��??平�????????寬度 */
-    background: rgba(255, 255, 255, 0.05); /* 淡淡????????��?? */
+    flex: 1;             /* 平均分配寬度 */
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid #333;
     border-radius: 8px;
     padding: 10px;
-    text-align: center;  /* ???�?置中 */
+    text-align: center;
     display: flex;
-    flex-direction: column; /* �????�?籤�??????????��?????�?�???? */
+    flex-direction: column;
 }
 
-/* �?籤�??�? (費�??/??��??/??????) */
+/* 標籤文字 (費用/攻擊/生命) */
 .stat-label {
     font-size: 0.8rem;
     color: #888;
     margin-bottom: 5px;
 }
 
-/* ??��????�身 */
+/* 數值本體 */
 .stat-value {
     font-size: 1.5rem;
     font-weight: bold;
     color: white;
-    font-family: var(--font-title); /* 使�?��??�?�?�?�???��??好�??�? */
+    font-family: var(--font-title);
 }
 
-/* 給�?��??????????��??�?�???��????? (??��??) */
-#modal-atk { color: #ff6b6b; } /* ??��??顯示�???? */
-#modal-hp  { color: #4ecdc4; } /* ?????�顯示�????? */
-#modal-cost{ color: var(--accent-gold); } /* 費�?�顯示�????? */
+/* 個別數值顏色設定 */
+#modal-atk { color: #ff6b6b; }       /* 攻擊力 */
+#modal-hp  { color: #4ecdc4; }       /* 生命值 */
+#modal-cost{ color: var(--accent-gold); } /* 費用 */
 
-/* --- ?????��???????��?? --- */
+/* --- 通用工具類別 --- */
 
-/* ??��?????�?????????��????? */
+/* 強制隱藏 */
 .hidden {
     display: none !important;
 }
 
-/* 簡�?��??淡�?��????��??�???????�?�?�????�? */
+/* 簡單的淡入動畫 */
 .page-section {
     animation: fadeIn 0.5s ease;
 }
@@ -324,12 +324,12 @@ select, input {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* ??��??覽�?????�?被�?�中??????�?�? (Active State) */
+/* 導覽列連結激活狀態 */
 .nav-links a.active {
     color: var(--accent-gold);
 }
 
-/* �? active �???��??�?�????�? */
+/* active 下方底線效果 */
 .nav-links a.active::after {
     content: '';
     position: absolute;
@@ -341,23 +341,20 @@ select, input {
     box-shadow: 0 0 5px var(--accent-gold);
 }
 
-/* --- 歷�?��?��???????��??�?�?�? --- */
+/* --- 歷史版本/側邊欄佈局 --- */
 
 .sidebar-layout {
-    display: flex;           /* �?左�?��?��??並�?? */
-    align-items: stretch;    /* ?????��??�?左�?��?��?????�?度�?��???????��??�???? */
-    min-height: calc(100vh - 80px); /* ?????��??強�?��??度�?��??�???��????��??�?�? - �?覽�??�?度�?? */
-    /* ???設�??覽�??大�?? 80px�????�???�以確�??就�????�容�?�?�?�?�??????��?��?? */
+    display: flex;           /* 左右並排 */
+    align-items: stretch;    /* 等高 */
+    min-height: calc(100vh - 80px); /* 扣除 Header 高度 */
 }
 
-/* 左�?��??�? */
+/* 側邊欄 */
 .sidebar {
-    width: 250px;           /* �?????????�寬�? */
-    border-right: 1px solid var(--accent-gold); /* ??????�?�???��??�? */
-    flex-shrink: 0;         /* ??�止空�??�?�????被�????? */
-    padding-bottom: 50px;   /* �???��??�???��?�空??? */
-    
-    /* �?????????��?? height: fit-content; ??? height: 100%; �???��??�?�?�???��??�???��?�容??? */
+    width: 250px;           
+    border-right: 1px solid var(--accent-gold);
+    flex-shrink: 0;         /* 防止空間不足被壓縮 */
+    padding-bottom: 50px;   
 }
 
 .sidebar-title {
@@ -386,11 +383,10 @@ select, input {
     border-left: 3px solid var(--accent-gold);
 }
 
-/* ??��?��?�容??? */
+/* 內容區域 */
 .content-area {
-    flex-grow: 1;           /* �?滿�?��?????空�?? */
+    flex-grow: 1;           /* 佔滿剩餘空間 */
     padding: 20px;
-    /* ??��????��??�???�以給�?��??設�??�?�?度�??確�??�??????��??�? */
     min-height: 100%;       
 }
 
@@ -407,7 +403,7 @@ select, input {
     align-items: flex-start;
 }
 
-/* ???�????�? */
+/* 牌組列表 */
 .deck-list {
     flex: 1;
     display: flex;
@@ -443,42 +439,42 @@ select, input {
     font-weight: bold;
     color: white;
 }
-/* 簡�?��??義幾?????�業�???? */
-/* --- ??�業???示�????�設�? --- */
+
+/* --- 職業圖示顏色設定 --- */
 .deck-icon.elf { 
     background: #2e7d32; 
     color: white; 
 }
 .deck-icon.royal { 
     background: #fbc02d; 
-    color: black; /* 淺�??深�?? */
+    color: black; 
 }
 .deck-icon.witch { 
-    background: #1a237e; /* 深�????? */
+    background: #1a237e; 
     color: white; 
 }
 .deck-icon.dragon { 
-    background: #ef6c00; /* 飽�??�? */
+    background: #ef6c00; 
     color: white; 
 }
 .deck-icon.abyss { 
-    background: #d32f2f; /* 鮮�????? */
+    background: #d32f2f; 
     color: white; 
 }
 .deck-icon.bishop { 
-    background: #f5f5f5; /* �?微帶�???��????��??�?�?�???��?? */
-    color: black; /* ??��??�?�???????�???? */
-    border: 1px solid #ccc; /* ?????��?��?��?��???????????�????�????�??????�混??��??�? */
+    background: #f5f5f5; 
+    color: black; 
+    border: 1px solid #ccc; 
 }
-
 .deck-icon.nemesis { 
-    background: #26c6da; /* �??????????????????? */
-    color: black; /* 淺�??深�?? */
+    background: #26c6da; 
+    color: black; 
 }
 .deck-icon.neutral { 
     background: #757575; 
     color: white; 
 }
+
 .deck-imgs {
     display: flex;
     gap: 5px;
@@ -504,7 +500,7 @@ select, input {
 }
 .deck-item:hover .arrow-icon { opacity: 1; }
 
-/* ???表�??�? */
+/* 圖表區域 */
 .chart-box {
     width: 400px;
     background: #111;
@@ -515,9 +511,9 @@ select, input {
     top: 20px;
 }
 
-/* --- ??��?��?��????��??�???�樣�? --- */
+/* --- 每週主打 / 英雄區域 --- */
 
-/* �???�大?????? */
+/* 主打大圖 */
 .weekly-hero {
     position: relative;
     width: 100%;
@@ -536,15 +532,15 @@ select, input {
     font-size: 2rem;
 }
 
-/* �???�左??��????��?? */
+/* 左右分欄 */
 .weekly-split {
     display: flex;
     gap: 30px;
 }
 
-/* 左�?��??�? */
+/* 指南區塊 */
 .weekly-guide {
-    flex: 1; /* �??????��??空�?? */
+    flex: 1; 
     background: rgba(255, 255, 255, 0.03);
     padding: 20px;
     border-radius: 8px;
@@ -564,24 +560,22 @@ select, input {
     line-height: 1.8;
 }
 
-/* ??��?��??表�??????????��?�沿??? .chart-box�????以�??裡�????�寫 */
-
-/* RWD: ???�????�????�?�??????? */
+/* RWD: 螢幕變窄時改為直式 */
 @media (max-width: 900px) {
     .weekly-split {
         flex-direction: column;
     }
     
     .chart-box {
-        width: 100%; /* ???�???????表滿�? */
+        width: 100%;
     }
 }
 
-/* --- ?????��??????????�樣�? --- */
+/* --- 規則說明樣式 --- */
 
 .rules-container {
     max-width: 800px;
-    margin: 0 auto; /* �???��?????表置�? */
+    margin: 0 auto; 
 }
 
 .rules-list {
@@ -604,7 +598,7 @@ select, input {
 .rule-item:hover {
     background: rgba(212, 175, 55, 0.1);
     border-color: var(--accent-gold);
-    transform: translateX(10px); /* �?�?移�????��??微�????�移 */
+    transform: translateX(10px);
 }
 
 .rule-number {
@@ -643,10 +637,10 @@ select, input {
     color: var(--accent-gold);
 }
 
-/* --- �????�?�?�?�?�? (Text Modal) --- */
-/* ??????�?寫�????? .modal-content ?????��??設�?? */
+/* --- 純文字彈窗 (Text Modal) --- */
+
 .text-modal-content {
-    max-width: 600px; /* ???�?�?�?�????�????麼寬 */
+    max-width: 600px; 
     border: 1px solid var(--accent-gold);
 }
 
@@ -654,12 +648,12 @@ select, input {
     color: #ddd;
     font-size: 1.1rem;
     line-height: 1.8;
-    max-height: 60vh; /* ??�容太�?��?? */
-    overflow-y: auto; /* ???許�??�???��?��?? */
-    padding-right: 10px; /* ??�軸???�? */
+    max-height: 60vh; /* 內容過長時 */
+    overflow-y: auto; /* 允許滾動 */
+    padding-right: 10px; 
 }
 
-/* �?�?�???��??�?�???��??�? */
+/* 彈窗標題 */
 #rule-modal-title {
     color: var(--accent-gold);
     border-bottom: 1px solid #333;
@@ -667,49 +661,48 @@ select, input {
     margin-bottom: 20px;
 }
 
-/* --- �???? PV ???�?設�?? --- */
+/* --- PV 影片區域設定 --- */
 
 .pv-section {
     margin-top: 50px;
-    padding: 40px 20px; /* �?�?�?�?�??????? */
-    background: rgba(0, 0, 0, 0.4); /* ?????�深�?�? */
+    padding: 40px 20px; 
+    background: rgba(0, 0, 0, 0.4); 
     border-radius: 16px;
     border: 1px solid #444;
 }
 
-/* ?????�修??��????��????��??大�???????? */
+/* PV 網格佈局 */
 .pv-grid {
-    display: flex;             /* ??��?? Flex �?�??????��????? */
-    flex-direction: column;    /* ?????��????? (1.0 ??��??, 2.0 ??��??...) */
-    align-items: center;       /* �?裡�?��????�容水平置中 */
-    gap: 60px;                 /* 影�??�???????�???��??大�??�?�?大氣 */
-    width: 100%;               /* 容�?��??滿寬�? */
+    display: flex;             
+    flex-direction: column;    
+    align-items: center;       
+    gap: 60px;                 
+    width: 100%;               
 }
 
-/* �?�????影�?????�? */
+/* 單個影片區塊 */
 .pv-item {
-    width: 100%;               /* ???設�??滿容??? */
-    max-width: 900px;          /* ?????��??大寬�? (???就�??"??�大"???極�??�?900px �?大�??) */
-    /* ??????�???��?? align-items: center�??????????�??????��??置中 */
+    width: 100%;               
+    max-width: 900px;          
 }
 
 .pv-item h3 {
-    text-align: center;        /*�?�?置中*/
+    text-align: center;       
     color: var(--accent-gold);
     margin-bottom: 20px;
-    font-size: 1.5rem;         /* �?�?�?�?�???�大�?�? */
-    letter-spacing: 1px;       /* �????�?�?�????質�?? */
+    font-size: 1.5rem;         
+    letter-spacing: 1px;       
 }
 
-/* 影�??容�?? */
+/* 影片容器 */
 .video-wrapper {
     position: relative;
-    width: 100%;               /* 填滿 .pv-item ???寬度 */
-    aspect-ratio: 16 / 9;      /* 維�?? 16:9 */
+    width: 100%;               
+    aspect-ratio: 16 / 9;      
     border-radius: 12px;
     overflow: hidden;
     border: 2px solid #555;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.7); /* ???強�?�影�?�?大�????��??�?�???? */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7); 
     transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
@@ -727,20 +720,20 @@ select, input {
 }
 
 
-/* --- ??��?? Footer 設�?? --- */
+/* --- Footer 設定 --- */
 
 .site-footer {
-    background-color: #050505; /* �??????��?�深???�???? */
-    border-top: 3px solid var(--accent-gold); /* ?????��????��??飾�?? */
+    background-color: #050505; 
+    border-top: 3px solid var(--accent-gold); 
     padding: 40px 20px;
-    margin-top: 80px; /* ?????��??�? Footer �?�?�?貼�??�???��????�容�??????��?��?�空??? */
+    margin-top: 80px; 
     font-size: 0.9rem;
     color: #888;
 }
 
 .footer-container {
     max-width: 1200px;
-    margin: 0 auto; /* 置中 */
+    margin: 0 auto; 
     text-align: center;
 }
 
@@ -754,7 +747,7 @@ select, input {
 
 .footer-divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, #333, transparent); /* 漸層??????�? */
+    background: linear-gradient(90deg, transparent, #333, transparent); 
     margin: 20px 0;
 }
 
@@ -764,7 +757,7 @@ select, input {
     margin-bottom: 15px;
     display: flex;
     justify-content: center;
-    gap: 20px; /* ???�?�??????????�? */
+    gap: 20px; 
 }
 
 .footer-links a {
@@ -774,7 +767,7 @@ select, input {
 }
 
 .footer-links a:hover {
-    color: var(--accent-gold); /* �?�?移�????��???????? */
+    color: var(--accent-gold); 
 }
 
 .copyright {
@@ -782,7 +775,7 @@ select, input {
     opacity: 0.6;
 }
 
-/* === ?????��?�罩 === */
+/* === 開始畫面遮罩 (Overlay) === */
 #start-overlay {
     position: fixed;
     top: 0;
@@ -818,83 +811,84 @@ select, input {
     color: #000;
 }
 
-/* === �?覽�??????????��????�設�? === */
+/* === 導覽列顯示控制 === */
 #site-header {
-    /* 確�?????�?�???��??�??????��??令永�??????? */
+    /* 轉場動畫 */
     transition: transform 2s ease, opacity 2s ease;
     
-    /* 確�??�??????�影???�?�? */
-    position: fixed; /* ??? sticky�????�??????��??麼寫 */
+    /* 固定定位 */
+    position: fixed; 
     top: 0;
     width: 100%;
     z-index: 1000;
 }
-/* 1. ???�??????? (??��??) */
+
+/* 1. 隱藏狀態 */
 .nav-hidden {
     opacity: 0;
-    transform: translateY(-100%); /* �?�???? */
+    transform: translateY(-100%); 
     pointer-events: none;
 }
 
-/* 2. 顯示?????? (浮�??) */
+/* 2. 顯示狀態 */
 .nav-visible {
     opacity: 1;
-    transform: translateY(0); /* ???歸�??�? */
+    transform: translateY(0); 
     pointer-events: auto;
 }
 
-/* === ?????�影???設�?? (模�?? background-size: cover) === */
+/* === 背景影片設定 (模擬 background-size: cover) === */
 .video-background {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* ??��?��??�?�? */
+    z-index: -1; 
     overflow: hidden;
-    pointer-events: none; /* �?�?�???�以穿�??影�??�??????�容 */
+    pointer-events: none; 
 }
 
-/* �? YouTube iframe 填滿??��??並�?????�?�????�?�???? */
+/* 讓 iframe 填滿背景 */
 .video-background iframe {
     position: absolute;
     top: 50%;
     left: 50%;
     width: 100vw;
-    height: 56.25vw; /* 16:9 �?�? */
+    height: 56.25vw; /* 16:9 */
     min-height: 100vh;
-    min-width: 177.77vh; /* 16:9 �?�? */
+    min-width: 177.77vh; 
     transform: translate(-50%, -50%);
-    opacity: 1; /* ???�?�??????? */
-    transition: opacity 2s ease; /* 8�?�????�?淡�????? */
+    opacity: 1; 
+    transition: opacity 2s ease; 
 }
 
-/* ??��?��?��????�模�????�?影�??�?�? */
+/* 淡出效果 */
 .video-background.faded iframe {
-    opacity: 0.3; /* 設�??�???��???????????�? */
+    opacity: 0.3; 
 }
 
-/* === 主�????�容??? === */
+/* === 主視覺內容 === */
 #main-hero-content {
     position: relative;
-    z-index: 1; /* ??�影???�?�? */
-    opacity: 0; /* ???�???��?? */
+    z-index: 1; 
+    opacity: 0; 
     transform: translateY(20px);
     transition: opacity 2s ease, transform 2s ease;
-    /* 確�????�容??????�?�?度�??以�??影�??�???? */
+    
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
-/* 顯示??�容??? class */
+/* 顯示內容 Class */
 #main-hero-content.visible {
     opacity: 1;
     transform: translateY(0);
 }
 
-/* === ?????��????? === */
+/* === 靜音按鈕 === */
 #mute-btn {
     position: fixed;
     bottom: 20px;
@@ -913,19 +907,19 @@ select, input {
     align-items: center;
 }
 
-/* === ?????��?��????��?��?? (Sci-Fi Style) === */
+/* === 音量控制器 (Sci-Fi 風格) === */
 #volume-control-panel {
     position: fixed;
     bottom: 30px;
     right: 30px;
     z-index: 9999;
     display: flex;
-    flex-direction: column; /* ??��???????? */
-    align-items: center;    /* 水平置中 */
+    flex-direction: column; 
+    align-items: center;    
     gap: 10px;
 }
 
-/* --- 主�?????設�?? --- */
+/* --- 主按鈕設定 --- */
 #volume-btn {
     width: 50px;
     height: 50px;
@@ -938,30 +932,30 @@ select, input {
     cursor: pointer;
     color: var(--accent-gold);
     font-size: 1.5rem;
-    box-shadow: 0 0 10px rgba(200, 170, 110, 0.3); /* ?????�微??? */
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* �?跳�????��????? */
+    box-shadow: 0 0 10px rgba(200, 170, 110, 0.3); 
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
     position: relative;
     z-index: 2;
 }
 
-/* �?�?移�????��?��?? */
+/* 懸停效果 */
 #volume-btn:hover {
     box-shadow: 0 0 20px var(--accent-gold);
     transform: scale(1.1);
     background: #000;
 }
 
-/* �????�?????????????????????? */
+/* 激活狀態 */
 #volume-control-panel.active #volume-btn {
     background: var(--accent-gold);
     color: #000;
     box-shadow: 0 0 25px var(--accent-gold);
 }
 
-/* --- �?桿容??? (??????梯�?????) --- */
+/* --- 滑桿容器 --- */
 #slider-wrapper {
     width: 40px;
-    height: 0; /* ???設�??度�?? 0 (??��??) */
+    height: 0; /* 預設高度 0 (隱藏) */
     opacity: 0;
     background: rgba(0, 0, 0, 0.9);
     border: 1px solid #444;
@@ -970,31 +964,31 @@ select, input {
     justify-content: center;
     align-items: center;
     transition: all 0.4s ease;
-    overflow: hidden; /* ???�???��??�?桿�????? */
+    overflow: hidden; 
     box-shadow: 0 4px 15px rgba(0,0,0,0.5);
 }
 
-/* �?????????? */
+/* 展開狀態 */
 #volume-control-panel.active #slider-wrapper {
-    height: 140px; /* �????�?�? */
+    height: 140px; 
     opacity: 1;
     border-color: var(--accent-gold);
     margin-bottom: 5px;
 }
 
-/* --- ?????��??桿�?��?? --- */
+/* --- 音量滑桿本體 --- */
 #volume-slider {
-    /* ????????�橫???�?桿�?? 90 �? */
+    /* 旋轉為垂直滑桿 */
     transform: rotate(-90deg); 
-    width: 100px; /* ?????��??覺�????????�?度�?? */
-    height: 40px; /* ?????��??覺�????????寬度???????????? */
+    width: 100px; 
+    height: 40px; 
     
     -webkit-appearance: none;
     background: transparent;
     cursor: pointer;
 }
 
-/* �?�?�???? */
+/* 滑軌 */
 #volume-slider::-webkit-slider-runnable-track {
     width: 100%;
     height: 4px;
@@ -1002,15 +996,15 @@ select, input {
     border-radius: 2px;
 }
 
-/* �?�? (?????��??�?) */
+/* 滑塊 (拖曳點) */
 #volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     height: 16px;
     width: 16px;
     border-radius: 50%;
     background: var(--accent-gold);
-    margin-top: -6px; /* 修正�?�? */
-    box-shadow: 0 0 10px var(--accent-gold); /* ??��????��?? */
+    margin-top: -6px; 
+    box-shadow: 0 0 10px var(--accent-gold); 
     transition: transform 0.1s;
 }
 
@@ -1018,7 +1012,7 @@ select, input {
     transform: scale(1.5);
 }
 
-/* === Loading ??��?? === */
+/* === Loading 載入畫面 === */
 #loader-screen {
     position: fixed;
     top: 0;
@@ -1026,7 +1020,7 @@ select, input {
     width: 100%;
     height: 100%;
     background: #000;
-    z-index: 10000; /* ???�?層�?? */
+    z-index: 10000; 
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -1035,17 +1029,16 @@ select, input {
     transition: opacity 0.5s ease;
 }
 
-/* �?????????��?? */
+/* 旋轉動畫 */
 .loader {
     width: 50px;
     height: 50px;
     border: 5px solid #333;
-    border-top: 5px solid var(--accent-gold); /* ?????��????? */
+    border-top: 5px solid var(--accent-gold); 
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 20px;
 }
-
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
