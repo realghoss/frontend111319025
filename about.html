@@ -4,12 +4,154 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>關於我們 - Shadowverse WB</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
     <link rel="stylesheet" href="style.css">
+
     <style>
-        
-        body { padding-top: 100px; text-align: center; }
-        .new-page-container { max-width: 800px; margin: 0 auto; padding: 40px; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid var(--accent-gold); }
+        body {
+            padding-top: 100px;
+            text-align: center;
+            background-color: var(--bg-color);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            color: var(--accent-gold);
+            font-family: var(--font-title);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .page-desc {
+            color: #aaa;
+            margin-bottom: 50px;
+            font-size: 1.1rem;
+        }
+
+        /* === 卡片網格系統 === */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+            padding: 20px;
+        }
+
+        /* === 人物卡片設計 === */
+        .profile-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 40px 20px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 金色光暈特效 */
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--accent-gold);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .profile-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-gold);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .profile-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        /* 頭像 */
+        .avatar-box {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid var(--accent-gold);
+            padding: 5px; /* 內圈間距 */
+            margin-bottom: 20px;
+        }
+
+        .avatar-box img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .role-badge {
+            background: #333;
+            color: var(--accent-gold);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .name {
+            font-size: 1.8rem;
+            color: #fff;
+            margin-bottom: 10px;
+            font-family: var(--font-title);
+        }
+
+        .bio {
+            color: #888;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            min-height: 50px; /* 保持高度一致 */
+        }
+
+        /* === Bootstrap 風格臉書按鈕 === */
+        .fb-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #1877F2; /* Facebook 官方藍 */
+            color: white;
+            text-decoration: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
+        }
+
+        .fb-btn:hover {
+            background-color: #166fe5;
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(24, 119, 242, 0.5);
+        }
+
+        /* 圖示微調 */
+        .fb-btn i {
+            font-size: 1.2rem;
+        }
+
     </style>
 </head>
 <body>
@@ -21,15 +163,44 @@
     </header>
 
     <main class="container">
-        <div class="new-page-container">
-            <h1 style="color: var(--accent-gold); margin-bottom: 20px;">關於製作團隊</h1>
-            <p style="color: #ccc; line-height: 1.8;">
-                雖然做了這個網站，但我們一致同意Shadowverse就是一個煞筆遊戲<br>
-                 這個網站的攻略資料完全來自於我們的遊玩經驗與網路上的資訊彙整<br>
-                 然後附上一張周天無的照片
-            </p>
-            <br>
-            <img src="images/decks/9.5.jpg" alt="Team" style="width:100%; border-radius:8px;">
+        <h1 class="page-title">開發團隊</h1>
+        <p class="page-desc">一群熱愛闇影詩章的玩家，致力於提供最優質的攻略資訊。</p>
+
+        <div class="team-grid">
+            
+            <div class="profile-card">
+                <div class="avatar-box">
+                    <img src="https://ui-avatars.com/api/?name=Ghost&background=D4AF37&color=000&size=256" alt="Avatar">
+                </div>
+                <span class="role-badge">鑽石帶Master</span>
+                <h3 class="name">范瑋綸</h3>
+                <p class="bio">
+                    負責網站全端開發與架構設計，<br>以及所有的卡牌分析資料<br>
+                    擅長職業：財寶皇家
+                </p>
+                
+                <a href="https://www.facebook.com/william.fan.902/" target="_blank" class="fb-btn">
+                    <i class="bi bi-facebook"></i> 連絡william fan
+                </a>
+            </div>
+
+            <div class="profile-card">
+                <div class="avatar-box">
+                    <img src="https://ui-avatars.com/api/?name=Partner&background=333&color=fff&size=256" alt="Avatar">
+                </div>
+                <span class="role-badge">富有美感的勞工</span>
+                <h3 class="name">周天無</h3>
+                <p class="bio">
+                    負責撰寫戰術教學與填寫卡牌資料庫，<br>美術設計總監<br>
+                    擅長職業：中速夜魔
+                </p>
+
+                <a href="https://www.facebook.com/zhou.tian.157564" target="_blank" class="fb-btn">
+                    <i class="bi bi-facebook"></i>
+                    聯絡9.5
+                </a>
+            </div>
+
         </div>
     </main>
 </body>
